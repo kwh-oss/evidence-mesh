@@ -45,6 +45,7 @@ def required_env(name: str) -> str:
 def main() -> int:
     public_host = required_env("PUBLIC_HOST")
     provider_display_name = required_env("PROVIDER_OR_TEAM_NAME")
+    agent_version = os.environ.get("ACS_VERSION", "0.1.0").strip() or "0.1.0"
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     for filename, (endpoint_port, endpoint_path) in ENDPOINTS.items():
@@ -55,6 +56,7 @@ def main() -> int:
             "countryCode": "CN",
             "organization": provider_display_name,
         }
+        raw["version"] = agent_version
         assigned_aic = os.environ.get(AIC_ENV_NAMES[filename], "").strip()
         if assigned_aic:
             raw["aic"] = assigned_aic
@@ -63,12 +65,26 @@ def main() -> int:
             f"https://{public_host}:{endpoint_port}{endpoint_path}"
         )
         raw.setdefault("entityMeta", {})["environment"] = "registry-review-candidate"
-        raw["entityMeta"]["validationBoundary"] = (
-            "Registry AIC, EAB and platform-issued certificates acquired; "
-            "production mTLS deployment, Discovery and AMP validation remain pending."
-        )
+        if assigned_aic:
+            raw["entityMeta"]["validationBoundary"] = (
+                "Registry AIC, EAB and platform-issued certificates acquired; "
+                "public mTLS boundary verified; Discovery and AMP validation remain pending."
+            )
+        else:
+            raw["entityMeta"]["validationBoundary"] = (
+                "Public mTLS endpoint boundary verified using the approved 0.1.0 "
+                "deployment identity; this version's Registry AIC, EAB and "
+                "platform-issued certificates remain pending until approval."
+            )
 
-        output = OUTPUT_DIR / filename.replace(".draft.json", ".review.json")
+        if agent_version == "0.1.0":
+            output_name = filename.replace(".draft.json", ".review.json")
+        else:
+            version_suffix = agent_version.replace(".", "-")
+            output_name = filename.replace(
+                ".draft.json", f".v{version_suffix}.review.json"
+            )
+        output = OUTPUT_DIR / output_name
         output.write_text(
             json.dumps(raw, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
         )
