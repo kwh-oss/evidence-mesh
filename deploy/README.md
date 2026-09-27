@@ -111,10 +111,21 @@ https://<PUBLIC_HOST>/rpc
 把材料放入下列目录，文件名保持一致：
 
 ```text
-deploy/secrets/leader/{trust-bundle.pem,client-cert.pem,client-key.pem}
+deploy/secrets/leader/{trust-bundle.pem,client-cert.pem,client-key.pem,server-cert.pem,server-key.pem}
 deploy/secrets/source-verifier/{trust-bundle.pem,server-cert.pem,server-key.pem}
 deploy/secrets/evidence-grader/{trust-bundle.pem,server-cert.pem,server-key.pem}
 deploy/secrets/contradiction-scout/{trust-bundle.pem,server-cert.pem,server-key.pem}
+```
+
+The public demo remains on `443`. Strict AIP mTLS uses one listener and one
+Registry-issued server identity per Agent so that certificate identity cannot be
+confused by path routing:
+
+```text
+Leader               https://<PUBLIC_HOST>:8440/rpc
+Source Verifier      https://<PUBLIC_HOST>:8441/rpc
+Evidence Grader      https://<PUBLIC_HOST>:8442/rpc
+Contradiction Scout  https://<PUBLIC_HOST>:8443/rpc
 ```
 
 在 `deploy/.env.server` 填入四个真实 AIC，然后执行：

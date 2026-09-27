@@ -20,11 +20,11 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIR = ROOT / "registry" / "acs-drafts"
 OUTPUT_DIR = ROOT / "registry" / "acs-private"
 
-ENDPOINT_PATHS = {
-    "evidence-audit-leader.draft.json": "/rpc",
-    "source-verifier.draft.json": "/source-verifier/rpc",
-    "evidence-grader.draft.json": "/evidence-grader/rpc",
-    "contradiction-scout.draft.json": "/contradiction-scout/rpc",
+ENDPOINTS = {
+    "evidence-audit-leader.draft.json": (8440, "/rpc"),
+    "source-verifier.draft.json": (8441, "/rpc"),
+    "evidence-grader.draft.json": (8442, "/rpc"),
+    "contradiction-scout.draft.json": (8443, "/rpc"),
 }
 
 AIC_ENV_NAMES = {
@@ -47,7 +47,7 @@ def main() -> int:
     provider_display_name = required_env("PROVIDER_OR_TEAM_NAME")
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    for filename, endpoint_path in ENDPOINT_PATHS.items():
+    for filename, (endpoint_port, endpoint_path) in ENDPOINTS.items():
         raw = json.loads((SOURCE_DIR / filename).read_text(encoding="utf-8"))
         # The static admission rule rejects an empty provider. Use the team
         # display name without disclosing a school or personal identity.
@@ -59,12 +59,13 @@ def main() -> int:
         if assigned_aic:
             raw["aic"] = assigned_aic
         raw["certificate"]["altNames"]["dns"] = [public_host]
-        raw["endPoints"][0]["url"] = f"https://{public_host}{endpoint_path}"
+        raw["endPoints"][0]["url"] = (
+            f"https://{public_host}:{endpoint_port}{endpoint_path}"
+        )
         raw.setdefault("entityMeta", {})["environment"] = "registry-review-candidate"
         raw["entityMeta"]["validationBoundary"] = (
-            "Public HTTPS and application protocol validated before review; "
-            "Registry AIC, EAB, platform-issued mTLS certificates, Discovery "
-            "and AMP remain post-approval work."
+            "Registry AIC, EAB and platform-issued certificates acquired; "
+            "production mTLS deployment, Discovery and AMP validation remain pending."
         )
 
         output = OUTPUT_DIR / filename.replace(".draft.json", ".review.json")
