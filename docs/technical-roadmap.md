@@ -45,6 +45,7 @@ Flux 当前是 WIT 发行包和文档门户，不是已证实的拖拽式在线�
 - [x] 生成并用官方 SDK 审查四份 ACS 预注册草稿
 - [x] 实现 AIC、Partner 地址、mTLS 客户端材料和身份绑定的环境化配置门禁
 - [x] 准备四服务本地容器部署骨架（本机无 Docker，镜像构建待验证）
+- [x] 完成自有域名 DNS、可信 HTTPS、三个 Partner AIP-RPC 与 Leader 端到端验证
 - [ ] Registry 创建草稿并提交审核
 - [ ] 获得 AIC、EAB 与 mTLS 证书
 - [ ] 完成 Discovery、Direct/Group 调用与 AMP 日志

@@ -34,7 +34,8 @@
 - 四智能体 ACS 预注册草稿、环境化身份配置和本地部署骨架已完成。
 - Registry 草稿/审核边界已核实，并加入阻止占位端点误提交的自动预检。
 - Leader 与三个 Partner 均已保存为 Registry 草稿；公网 HTTPS 预演与三条 AIP-RPC
-  状态机验证已通过，但尚未提交 Registry 审核、签发正式证书或完成平台验收。
+  状态机验证已通过；自有域名的可信 HTTPS、三个 Partner AIP-RPC 与 Leader 端到端
+  验证也已完成，但尚未提交 Registry 审核、签发正式 mTLS 证书或完成平台验收。
 
 ## 公开仓库边界
 

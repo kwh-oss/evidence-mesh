@@ -20,7 +20,15 @@ TEXT_SUFFIXES = {
     ".yml",
     ".yaml",
 }
-SKIP_DIRS = {".git", ".venv", "__pycache__", "private", "secrets", "tmp"}
+SKIP_DIRS = {
+    ".git",
+    ".venv",
+    "__pycache__",
+    "acs-private",
+    "private",
+    "secrets",
+    "tmp",
+}
 ACTIVE_ROOTS = {
     ".github",
     "deploy",

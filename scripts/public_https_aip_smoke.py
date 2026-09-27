@@ -7,6 +7,7 @@ TLS transport and the SDK task lifecycle, not Registry approval or AIP mTLS.
 from __future__ import annotations
 
 import asyncio
+from datetime import date
 import json
 import os
 from pathlib import Path
@@ -18,7 +19,10 @@ from acps_sdk.aip.aip_rpc_client import AipRpcClient
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN_DIR = ROOT / "evidence" / "runs" / "2026-09-26-public-https-aip"
+RUN_ID = os.environ.get(
+    "EVIDENCE_RUN_ID", f"{date.today().isoformat()}-public-https-aip"
+).strip()
+RUN_DIR = ROOT / "evidence" / "runs" / RUN_ID
 PUBLIC_HOST = os.environ.get("PUBLIC_HOST", "").strip()
 if not PUBLIC_HOST:
     raise SystemExit("set PUBLIC_HOST to the deployed HTTPS hostname")
@@ -44,9 +48,10 @@ SAMPLE_REQUEST = {
 
 
 async def call_partner(
-    name: str, expected_product_type: str, transport: httpx.AsyncHTTPTransport
+    name: str, expected_product_type: str
 ) -> dict:
     endpoint = f"{BASE_URL}/{name}/rpc"
+    transport = httpx.AsyncHTTPTransport(retries=2, verify=True)
     client = AipRpcClient(
         endpoint,
         "preview-leader",
@@ -91,16 +96,12 @@ async def call_partner(
 
 async def main() -> int:
     RUN_DIR.mkdir(parents=True, exist_ok=True)
-    transport = httpx.AsyncHTTPTransport(retries=2, verify=True)
-    try:
-        results = await asyncio.gather(
-            *(
-                call_partner(name, product_type, transport)
-                for name, product_type in PARTNERS.items()
-            )
+    results = await asyncio.gather(
+        *(
+            call_partner(name, product_type)
+            for name, product_type in PARTNERS.items()
         )
-    finally:
-        await transport.aclose()
+    )
 
     report = {
         "status": "passed",
