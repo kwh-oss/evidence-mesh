@@ -27,6 +27,13 @@ ENDPOINT_PATHS = {
     "contradiction-scout.draft.json": "/contradiction-scout/rpc",
 }
 
+AIC_ENV_NAMES = {
+    "evidence-audit-leader.draft.json": "LEADER_AIC",
+    "source-verifier.draft.json": "SOURCE_VERIFIER_AIC",
+    "evidence-grader.draft.json": "EVIDENCE_GRADER_AIC",
+    "contradiction-scout.draft.json": "CONTRADICTION_SCOUT_AIC",
+}
+
 
 def required_env(name: str) -> str:
     value = os.environ.get(name, "").strip()
@@ -48,6 +55,9 @@ def main() -> int:
             "countryCode": "CN",
             "organization": provider_display_name,
         }
+        assigned_aic = os.environ.get(AIC_ENV_NAMES[filename], "").strip()
+        if assigned_aic:
+            raw["aic"] = assigned_aic
         raw["certificate"]["altNames"]["dns"] = [public_host]
         raw["endPoints"][0]["url"] = f"https://{public_host}{endpoint_path}"
         raw.setdefault("entityMeta", {})["environment"] = "registry-review-candidate"
