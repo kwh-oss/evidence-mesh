@@ -1,0 +1,108 @@
+{
+  "status": "passed",
+  "scope": "local-temporary-ca-tls13-mtls",
+  "proves": [
+    "three Partner sockets required a trusted client certificate",
+    "TLS 1.3 client and server contexts completed handshakes",
+    "Leader certificate AIC matched AIP command sender identity",
+    "Partner certificate AICs matched AIP result sender identities",
+    "Leader aggregated all three Partner products"
+  ],
+  "does_not_prove": [
+    "Registry-issued certificate validity",
+    "Discovery lookup",
+    "AMP telemetry",
+    "public-network reachability",
+    "competition-platform acceptance"
+  ],
+  "health": {
+    "source-verifier": {
+      "status": "ok",
+      "service": "source-verifier",
+      "identity_binding": "enabled"
+    },
+    "evidence-grader": {
+      "status": "ok",
+      "service": "evidence-grader",
+      "identity_binding": "enabled"
+    },
+    "contradiction-scout": {
+      "status": "ok",
+      "service": "contradiction-scout",
+      "identity_binding": "enabled"
+    },
+    "leader": {
+      "status": "ok",
+      "service": "evidence-audit-leader"
+    }
+  },
+  "request": {
+    "schema_version": "1.0",
+    "claim_id": "local-mtls-smoke-001",
+    "claim_text": "材料提高抗菌率",
+    "source": {
+      "source_id": "doi:local-mtls-example",
+      "title": "Local mTLS smoke-test source",
+      "locator": "Results, paragraph 2"
+    },
+    "source_excerpt": "结果显示材料提高抗菌率，并在重复实验中趋势一致。"
+  },
+  "response": {
+    "schema_version": "1.0",
+    "product_type": "evidence-passport",
+    "claim_id": "local-mtls-smoke-001",
+    "decision": "supported",
+    "risk_flags": [],
+    "task_ids": {
+      "source-verifier": "task-e1767027-857e-4e52-bd98-4ffec763ccb2",
+      "evidence-grader": "task-ae911aab-0639-4d27-9e6f-83cbc2d79e38",
+      "contradiction-scout": "task-8cf8bb90-0520-4337-938e-c137888619ab"
+    },
+    "partner_products": {
+      "source-verifier": {
+        "payload": {
+          "agent_id": "source-verifier",
+          "claim_id": "local-mtls-smoke-001",
+          "issues": [],
+          "source": {
+            "locator": "Results, paragraph 2",
+            "source_id": "doi:local-mtls-example",
+            "title": "Local mTLS smoke-test source"
+          },
+          "status": "verified"
+        },
+        "product_type": "source-check",
+        "schema_version": "1.0"
+      },
+      "evidence-grader": {
+        "payload": {
+          "agent_id": "evidence-grader",
+          "claim_id": "local-mtls-smoke-001",
+          "confidence": 0.95,
+          "level": "direct",
+          "rationale": "The normalized claim appears explicitly in the supplied excerpt.",
+          "sources": [
+            {
+              "locator": "Results, paragraph 2",
+              "source_id": "doi:local-mtls-example",
+              "title": "Local mTLS smoke-test source"
+            }
+          ]
+        },
+        "product_type": "evidence-finding",
+        "schema_version": "1.0"
+      },
+      "contradiction-scout": {
+        "payload": {
+          "agent_id": "contradiction-scout",
+          "claim_id": "local-mtls-smoke-001",
+          "indicators": [],
+          "status": "none-found"
+        },
+        "product_type": "contradiction-check",
+        "schema_version": "1.0"
+      }
+    }
+  },
+  "certificate_persistence": "temporary test certificates deleted at exit"
+}

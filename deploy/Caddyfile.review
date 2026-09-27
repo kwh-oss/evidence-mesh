@@ -1,0 +1,19 @@
+{$PUBLIC_HOST} {
+	encode zstd gzip
+
+	handle_path /source-verifier/* {
+		reverse_proxy source-verifier:8021
+	}
+
+	handle_path /evidence-grader/* {
+		reverse_proxy evidence-grader:8022
+	}
+
+	handle_path /contradiction-scout/* {
+		reverse_proxy contradiction-scout:8023
+	}
+
+	handle {
+		reverse_proxy leader:8010
+	}
+}

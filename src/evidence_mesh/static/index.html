@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="证链联研：通过多智能体协作核验科研结论、来源、证据强度和冲突。"
+    />
+    <title>证链联研 · 科研证据协同核验</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="证链联研首页">
+        <span class="brand-mark" aria-hidden="true">证</span>
+        <span>
+          <strong>证链联研</strong>
+          <small>Evidence Mesh</small>
+        </span>
+      </a>
+      <span class="status-pill"><i></i> 本地MVP</span>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">AIP MULTI-AGENT EVIDENCE AUDIT</p>
+        <h1>别让“相关”，<br />悄悄变成“证明”。</h1>
+        <p class="hero-copy">
+          输入科研结论和证据片段，由三个独立智能体分别核验来源、判断支持强度、寻找冲突，
+          再由Leader生成可追踪的证据护照。
+        </p>
+        <div class="agent-strip" aria-label="协作智能体">
+          <span>来源核验</span><b>→</b><span>证据分级</span><b>→</b><span>冲突检查</span>
+        </div>
+      </section>
+
+      <section class="workspace" aria-label="科研证据核验工作区">
+        <form id="audit-form" class="audit-form">
+          <div class="section-heading">
+            <span>01</span>
+            <div><h2>提交核验任务</h2><p>仅依据你提供的证据片段进行判断。</p></div>
+          </div>
+
+          <label class="field field-wide">
+            <span>待核验结论 <em>必填</em></span>
+            <textarea id="claim-text" rows="3" required placeholder="例如：该处理导致细胞死亡。"></textarea>
+          </label>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>来源ID <em>必填</em></span>
+              <input id="source-id" required placeholder="DOI、PMID或内部文档ID" />
+            </label>
+            <label class="field">
+              <span>来源标题 <em>必填</em></span>
+              <input id="source-title" required placeholder="论文或报告标题" />
+            </label>
+          </div>
+
+          <label class="field field-wide">
+            <span>精确位置 <em>必填</em></span>
+            <input id="source-locator" required placeholder="例如：Abstract；Results，第2段；Figure 3" />
+          </label>
+
+          <label class="field field-wide">
+            <span>证据原文或准确摘录 <em>必填</em></span>
+            <textarea id="source-excerpt" rows="5" required placeholder="粘贴能够支持或反驳上述结论的原文片段。"></textarea>
+          </label>
+
+          <div class="form-actions">
+            <button class="secondary-button" type="button" id="example-button">填入演示案例</button>
+            <button class="primary-button" type="submit" id="submit-button">
+              <span>启动协同核验</span><b aria-hidden="true">↗</b>
+            </button>
+          </div>
+          <p class="privacy-note">当前版本不会自动检索外部文献；请勿输入隐私、密钥或未获授权的材料。</p>
+        </form>
+
+        <section id="result-panel" class="result-panel" aria-live="polite" hidden>
+          <div class="section-heading">
+            <span>02</span>
+            <div><h2>Evidence Passport</h2><p>每个判断都保留对应的AIP任务编号。</p></div>
+          </div>
+          <div id="result-summary" class="result-summary"></div>
+          <div id="agent-results" class="agent-results"></div>
+          <details class="trace-panel">
+            <summary>查看任务追踪信息</summary>
+            <div id="task-trace"></div>
+          </details>
+        </section>
+      </section>
+    </main>
+
+    <footer>
+      <span>证链联研 v0.1</span>
+      <span>结论用于辅助核验，不替代专业判断。</span>
+    </footer>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,102 @@
+services:
+  source-verifier:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: ["python", "-m", "evidence_mesh.serve_partner"]
+    environment:
+      AIP_IDENTITY_BINDING_ENABLED: "true"
+      AGENT_AIC: ${SOURCE_VERIFIER_AIC:?set SOURCE_VERIFIER_AIC}
+      PARTNER_APP: evidence_mesh.source_partner:app
+      AIP_SERVER_PORT: "8441"
+      AIP_SERVER_CA_FILE: /run/acps/trust-bundle.pem
+      AIP_SERVER_CERT_FILE: /run/acps/server-cert.pem
+      AIP_SERVER_KEY_FILE: /run/acps/server-key.pem
+    ports:
+      - "8441:8441"
+    volumes:
+      - ./secrets/source-verifier:/run/acps:ro
+    restart: unless-stopped
+
+  evidence-grader:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: ["python", "-m", "evidence_mesh.serve_partner"]
+    environment:
+      AIP_IDENTITY_BINDING_ENABLED: "true"
+      AGENT_AIC: ${EVIDENCE_GRADER_AIC:?set EVIDENCE_GRADER_AIC}
+      PARTNER_APP: evidence_mesh.grader_partner:app
+      AIP_SERVER_PORT: "8442"
+      AIP_SERVER_CA_FILE: /run/acps/trust-bundle.pem
+      AIP_SERVER_CERT_FILE: /run/acps/server-cert.pem
+      AIP_SERVER_KEY_FILE: /run/acps/server-key.pem
+    ports:
+      - "8442:8442"
+    volumes:
+      - ./secrets/evidence-grader:/run/acps:ro
+    restart: unless-stopped
+
+  contradiction-scout:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: ["python", "-m", "evidence_mesh.serve_partner"]
+    environment:
+      AIP_IDENTITY_BINDING_ENABLED: "true"
+      AGENT_AIC: ${CONTRADICTION_SCOUT_AIC:?set CONTRADICTION_SCOUT_AIC}
+      PARTNER_APP: evidence_mesh.contradiction_partner:app
+      AIP_SERVER_PORT: "8443"
+      AIP_SERVER_CA_FILE: /run/acps/trust-bundle.pem
+      AIP_SERVER_CERT_FILE: /run/acps/server-cert.pem
+      AIP_SERVER_KEY_FILE: /run/acps/server-key.pem
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./secrets/contradiction-scout:/run/acps:ro
+    restart: unless-stopped
+
+  leader:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    environment:
+      AIP_IDENTITY_BINDING_ENABLED: "true"
+      LEADER_AIC: ${LEADER_AIC:?set LEADER_AIC}
+      SOURCE_VERIFIER_AIC: ${SOURCE_VERIFIER_AIC:?set SOURCE_VERIFIER_AIC}
+      EVIDENCE_GRADER_AIC: ${EVIDENCE_GRADER_AIC:?set EVIDENCE_GRADER_AIC}
+      CONTRADICTION_SCOUT_AIC: ${CONTRADICTION_SCOUT_AIC:?set CONTRADICTION_SCOUT_AIC}
+      SOURCE_VERIFIER_URL: https://${PUBLIC_HOST:?set PUBLIC_HOST}:8441/rpc
+      EVIDENCE_GRADER_URL: https://${PUBLIC_HOST:?set PUBLIC_HOST}:8442/rpc
+      CONTRADICTION_SCOUT_URL: https://${PUBLIC_HOST:?set PUBLIC_HOST}:8443/rpc
+      AIP_CLIENT_CA_FILE: /run/acps/trust-bundle.pem
+      AIP_CLIENT_CERT_FILE: /run/acps/client-cert.pem
+      AIP_CLIENT_KEY_FILE: /run/acps/client-key.pem
+    volumes:
+      - ./secrets/leader:/run/acps:ro
+    extra_hosts:
+      - "${PUBLIC_HOST:?set PUBLIC_HOST}:host-gateway"
+    depends_on:
+      - source-verifier
+      - evidence-grader
+      - contradiction-scout
+    restart: unless-stopped
+
+  gateway:
+    image: caddy:2-alpine
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST:?set PUBLIC_HOST}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile.mtls:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - leader
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

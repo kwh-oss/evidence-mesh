@@ -1,0 +1,83 @@
+{
+  "aic": "REGISTRY_ASSIGNED_EVIDENCE_GRADER_AIC",
+  "active": false,
+  "lastModifiedTime": "2026-09-25T00:00:00+08:00",
+  "protocolVersion": "02.02",
+  "name": "证链证据分级智能体",
+  "description": "比较待核验科研结论与用户提供的证据原文，将支持关系分为direct、indirect、conditional、unsupported或conflicting，并返回理由、来源和置信度。当前版本是可复核的确定性基线，不判断论文整体质量，不替代统计分析或领域专家结论。",
+  "version": "0.1.0",
+  "provider": {
+    "countryCode": "CN",
+    "organization": "REPLACE_WITH_REGISTRY_VERIFIED_ORGANIZATION",
+    "department": "solo living"
+  },
+  "securitySchemes": {
+    "mtls": {
+      "type": "mutualTLS",
+      "description": "目标部署使用mTLS进行AIP直连身份认证；提交前必须完成证书接入验证"
+    }
+  },
+  "certificate": {
+    "altNames": {
+      "dns": [
+        "replace-before-submission.invalid"
+      ]
+    },
+    "requestedValidity": 365
+  },
+  "endPoints": [
+    {
+      "url": "https://replace-before-submission.invalid/evidence-grader/rpc",
+      "transport": "JSONRPC",
+      "security": [
+        {
+          "mtls": []
+        }
+      ]
+    }
+  ],
+  "capabilities": {
+    "streaming": false,
+    "notification": false,
+    "messageQueue": []
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "evidence-mesh.evidence.support-grading",
+      "name": "科研结论支持强度分级",
+      "description": "依据给定结论和单个证据摘录，识别直接支持、间接支持、条件性支持和不支持，并特别降级因果表述超过相关性证据的情况。输出仅针对所给片段。",
+      "version": "0.1.0",
+      "tags": [
+        "证据分级",
+        "直接证据",
+        "间接证据",
+        "因果越界",
+        "科研证据",
+        "Partner"
+      ],
+      "examples": [
+        "判断这段Results是否直接支持该科研结论",
+        "识别结论中的因果措辞是否超过原文证据"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    }
+  ],
+  "entityMeta": {
+    "project": "evidence-mesh",
+    "role": "partner",
+    "team": "solo living",
+    "productType": "evidence-finding",
+    "environment": "draft"
+  }
+}

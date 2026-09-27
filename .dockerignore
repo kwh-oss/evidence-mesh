@@ -1,0 +1,12 @@
+.git
+.venv
+__pycache__
+*.pyc
+.env
+deploy/.env.server
+deploy/secrets
+*.pem
+*.key
+eab.json
+evidence/private
+tmp

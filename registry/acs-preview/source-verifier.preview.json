@@ -1,0 +1,66 @@
+{
+  "aic": "REGISTRY_ASSIGNED_SOURCE_VERIFIER_AIC",
+  "active": false,
+  "lastModifiedTime": "2026-09-25T00:00:00+08:00",
+  "protocolVersion": "02.02",
+  "name": "证链来源核验智能体",
+  "description": "核验科研证据任务中的来源标识、标题、精确位置和证据摘录是否完整且可追踪，返回结构化source-check产品。当前版本只检查调用方提供的信息，不自动访问数据库确认论文真实存在，也不评价结论是否成立。",
+  "version": "0.1.0",
+  "provider": {
+    "countryCode": "CN",
+    "organization": "REPLACE_WITH_REGISTRY_VERIFIED_ORGANIZATION",
+    "department": "solo living"
+  },
+  "securitySchemes": {},
+  "endPoints": [
+    {
+      "url": "https://preview-host.invalid/source-verifier/rpc",
+      "transport": "JSONRPC"
+    }
+  ],
+  "capabilities": {
+    "streaming": false,
+    "notification": false,
+    "messageQueue": []
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "evidence-mesh.source.traceability-check",
+      "name": "科研来源可追踪性检查",
+      "description": "检查来源ID、标题、页码或段落等定位信息以及证据摘录的完整性，输出verified、incomplete或invalid状态和问题列表；不执行外部文献真实性检索。",
+      "version": "0.1.0",
+      "tags": [
+        "来源核验",
+        "可追踪性",
+        "科研证据",
+        "元数据检查",
+        "Partner"
+      ],
+      "examples": [
+        "检查该DOI、论文标题、Results段落和摘录是否足以定位证据",
+        "指出这条证据记录缺少哪些来源字段"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    }
+  ],
+  "entityMeta": {
+    "project": "evidence-mesh",
+    "role": "partner",
+    "team": "solo living",
+    "productType": "source-check",
+    "environment": "preview-https-no-identity-binding",
+    "submissionReady": false,
+    "validationBoundary": "Public HTTPS preview only; Registry AIC, mTLS identity binding, Discovery and AMP remain unverified."
+  }
+}

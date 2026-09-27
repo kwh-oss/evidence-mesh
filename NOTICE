@@ -1,0 +1,22 @@
+证链联研 (Evidence Mesh)
+Copyright 2026 solo living contributors
+
+This product includes integration code designed to work with the Agent
+Collaboration Protocols (ACPs) specifications and SDK published by AIP-PUB.
+The upstream project is available at:
+
+    https://github.com/AIP-PUB/ACPs-community
+
+The pinned public source release is:
+
+    v2.2.0
+
+The local release manifest additionally records the upstream source revision
+and SHA-256 hashes used for the original offline validation.
+
+ACPs SDK, WIT, their specifications, and all other third-party components remain
+subject to their respective upstream copyright and license terms. The Apache
+License 2.0 in this repository applies only to original Evidence Mesh code and
+documentation unless a file states otherwise.
+
+Locally obtained wheel files are intentionally excluded from this repository.

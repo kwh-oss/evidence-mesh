@@ -1,0 +1,83 @@
+{
+  "aic": "REGISTRY_ASSIGNED_CONTRADICTION_SCOUT_AIC",
+  "active": false,
+  "lastModifiedTime": "2026-09-25T00:00:00+08:00",
+  "protocolVersion": "02.02",
+  "name": "证链冲突侦测智能体",
+  "description": "检查待核验科研结论与指定证据摘录之间是否出现方向相反、否定或转折冲突，返回none-found、possible或confirmed状态及触发指标。当前版本不是跨论文系统综述，也不能把未发现冲突解释为结论已经成立。",
+  "version": "0.1.0",
+  "provider": {
+    "countryCode": "CN",
+    "organization": "REPLACE_WITH_REGISTRY_VERIFIED_ORGANIZATION",
+    "department": "solo living"
+  },
+  "securitySchemes": {
+    "mtls": {
+      "type": "mutualTLS",
+      "description": "目标部署使用mTLS进行AIP直连身份认证；提交前必须完成证书接入验证"
+    }
+  },
+  "certificate": {
+    "altNames": {
+      "dns": [
+        "replace-before-submission.invalid"
+      ]
+    },
+    "requestedValidity": 365
+  },
+  "endPoints": [
+    {
+      "url": "https://replace-before-submission.invalid/contradiction-scout/rpc",
+      "transport": "JSONRPC",
+      "security": [
+        {
+          "mtls": []
+        }
+      ]
+    }
+  ],
+  "capabilities": {
+    "streaming": false,
+    "notification": false,
+    "messageQueue": []
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "evidence-mesh.contradiction.direction-check",
+      "name": "结论与证据冲突侦测",
+      "description": "检查结论和给定摘录中的方向反转、明确否定与转折信号，输出结构化冲突状态和指标；不执行全领域文献搜索，也不保证穷尽语义冲突。",
+      "version": "0.1.0",
+      "tags": [
+        "冲突检测",
+        "方向反转",
+        "否定识别",
+        "科研证据",
+        "风险提示",
+        "Partner"
+      ],
+      "examples": [
+        "检查结论说提高而证据原文说降低的冲突",
+        "识别证据摘录中可能反驳结论的转折信号"
+      ],
+      "inputModes": [
+        "application/json"
+      ],
+      "outputModes": [
+        "application/json"
+      ]
+    }
+  ],
+  "entityMeta": {
+    "project": "evidence-mesh",
+    "role": "partner",
+    "team": "solo living",
+    "productType": "contradiction-check",
+    "environment": "draft"
+  }
+}

@@ -1,0 +1,64 @@
+services:
+  source-verifier:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: ["python", "-m", "uvicorn", "evidence_mesh.source_partner:app", "--host", "0.0.0.0", "--port", "8021"]
+    environment:
+      AIP_IDENTITY_BINDING_ENABLED: "false"
+    restart: unless-stopped
+
+  evidence-grader:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: ["python", "-m", "uvicorn", "evidence_mesh.grader_partner:app", "--host", "0.0.0.0", "--port", "8022"]
+    environment:
+      AIP_IDENTITY_BINDING_ENABLED: "false"
+    restart: unless-stopped
+
+  contradiction-scout:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    command: ["python", "-m", "uvicorn", "evidence_mesh.contradiction_partner:app", "--host", "0.0.0.0", "--port", "8023"]
+    environment:
+      AIP_IDENTITY_BINDING_ENABLED: "false"
+    restart: unless-stopped
+
+  leader:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    environment:
+      AIP_IDENTITY_BINDING_ENABLED: "false"
+      SOURCE_VERIFIER_URL: http://source-verifier:8021/rpc
+      EVIDENCE_GRADER_URL: http://evidence-grader:8022/rpc
+      CONTRADICTION_SCOUT_URL: http://contradiction-scout:8023/rpc
+    depends_on:
+      - source-verifier
+      - evidence-grader
+      - contradiction-scout
+    restart: unless-stopped
+
+  gateway:
+    image: caddy:2-alpine
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST:?set PUBLIC_HOST in deploy/.env.server}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile.review:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - leader
+      - source-verifier
+      - evidence-grader
+      - contradiction-scout
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

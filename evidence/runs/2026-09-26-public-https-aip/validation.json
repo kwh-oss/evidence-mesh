@@ -1,0 +1,95 @@
+{
+  "status": "passed",
+  "scope": "public-https-aip-rpc-preview",
+  "base_url": "https://124-156-165-7.sslip.io",
+  "identity_binding_enabled": false,
+  "proves": [
+    "public HTTPS reaches three independent Partner RPC endpoints",
+    "SDK start and complete task lifecycle succeeds for every Partner",
+    "each Partner returns its declared typed product"
+  ],
+  "does_not_prove": [
+    "Registry approval or AIC issuance",
+    "Discovery lookup",
+    "mTLS peer identity binding",
+    "AMP telemetry",
+    "competition-platform acceptance"
+  ],
+  "request": {
+    "schema_version": "1.0",
+    "claim_id": "public-https-aip-smoke-001",
+    "claim_text": "示例处理导致细胞死亡",
+    "source": {
+      "source_id": "demo:public-https-aip-smoke",
+      "title": "无敏感数据的公网 AIP-RPC 测试",
+      "locator": "synthetic smoke test"
+    },
+    "source_excerpt": "结果提示处理与细胞死亡相关，可能涉及氧化应激。"
+  },
+  "partners": {
+    "source-verifier": {
+      "endpoint": "https://124-156-165-7.sslip.io/source-verifier/rpc",
+      "session_id": "session-e8429a04-736f-4991-aab5-d0a3fcba5b42",
+      "task_id": "task-0ef5a3ad-ae8f-4244-849a-c7d50a402663",
+      "start_state": "awaiting-completion",
+      "complete_state": "completed",
+      "product": {
+        "payload": {
+          "agent_id": "source-verifier",
+          "claim_id": "public-https-aip-smoke-001",
+          "issues": [],
+          "source": {
+            "locator": "synthetic smoke test",
+            "source_id": "demo:public-https-aip-smoke",
+            "title": "无敏感数据的公网 AIP-RPC 测试"
+          },
+          "status": "verified"
+        },
+        "product_type": "source-check",
+        "schema_version": "1.0"
+      }
+    },
+    "evidence-grader": {
+      "endpoint": "https://124-156-165-7.sslip.io/evidence-grader/rpc",
+      "session_id": "session-67e8d4e4-dc69-47c4-9dbd-f495834cbccd",
+      "task_id": "task-3749f1cf-8f06-4de1-bd64-afbaba5f8181",
+      "start_state": "awaiting-completion",
+      "complete_state": "completed",
+      "product": {
+        "payload": {
+          "agent_id": "evidence-grader",
+          "claim_id": "public-https-aip-smoke-001",
+          "confidence": 0.88,
+          "level": "conditional",
+          "rationale": "The claim is causal or definitive, while the excerpt is associative or hedged.",
+          "sources": [
+            {
+              "locator": "synthetic smoke test",
+              "source_id": "demo:public-https-aip-smoke",
+              "title": "无敏感数据的公网 AIP-RPC 测试"
+            }
+          ]
+        },
+        "product_type": "evidence-finding",
+        "schema_version": "1.0"
+      }
+    },
+    "contradiction-scout": {
+      "endpoint": "https://124-156-165-7.sslip.io/contradiction-scout/rpc",
+      "session_id": "session-b0151a3c-6a3b-485d-bcc9-446eaee693b1",
+      "task_id": "task-c094f3d2-b637-4507-99cd-99b5c1944e0a",
+      "start_state": "awaiting-completion",
+      "complete_state": "completed",
+      "product": {
+        "payload": {
+          "agent_id": "contradiction-scout",
+          "claim_id": "public-https-aip-smoke-001",
+          "indicators": [],
+          "status": "none-found"
+        },
+        "product_type": "contradiction-check",
+        "schema_version": "1.0"
+      }
+    }
+  }
+}

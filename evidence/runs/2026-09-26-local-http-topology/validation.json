@@ -1,0 +1,107 @@
+{
+  "status": "passed",
+  "scope": "local-loopback-http-only",
+  "proves": [
+    "four independent processes started",
+    "four health endpoints responded over HTTP",
+    "Leader called three Partner /rpc endpoints",
+    "three typed Partner products were returned"
+  ],
+  "does_not_prove": [
+    "Registry approval or AIC issuance",
+    "Discovery lookup",
+    "mTLS identity binding",
+    "AMP telemetry",
+    "public-network reachability",
+    "competition-platform acceptance"
+  ],
+  "health": {
+    "source-verifier": {
+      "status": "ok",
+      "service": "source-verifier",
+      "identity_binding": "disabled"
+    },
+    "evidence-grader": {
+      "status": "ok",
+      "service": "evidence-grader",
+      "identity_binding": "disabled"
+    },
+    "contradiction-scout": {
+      "status": "ok",
+      "service": "contradiction-scout",
+      "identity_binding": "disabled"
+    },
+    "leader": {
+      "status": "ok",
+      "service": "evidence-audit-leader"
+    }
+  },
+  "request": {
+    "schema_version": "1.0",
+    "claim_id": "local-http-smoke-001",
+    "claim_text": "材料提高抗菌率",
+    "source": {
+      "source_id": "doi:local-smoke-example",
+      "title": "Local HTTP smoke-test source",
+      "locator": "Results, paragraph 2"
+    },
+    "source_excerpt": "结果显示材料提高抗菌率，并在重复实验中趋势一致。"
+  },
+  "response": {
+    "schema_version": "1.0",
+    "product_type": "evidence-passport",
+    "claim_id": "local-http-smoke-001",
+    "decision": "supported",
+    "risk_flags": [],
+    "task_ids": {
+      "source-verifier": "task-6585f421-d6db-41e6-a926-f7896fabf4b9",
+      "evidence-grader": "task-12b20266-9d38-4028-b8cc-e3f96a2d1e56",
+      "contradiction-scout": "task-b95cb7fa-a43d-4c58-9fa4-3db073caf75e"
+    },
+    "partner_products": {
+      "source-verifier": {
+        "payload": {
+          "agent_id": "source-verifier",
+          "claim_id": "local-http-smoke-001",
+          "issues": [],
+          "source": {
+            "locator": "Results, paragraph 2",
+            "source_id": "doi:local-smoke-example",
+            "title": "Local HTTP smoke-test source"
+          },
+          "status": "verified"
+        },
+        "product_type": "source-check",
+        "schema_version": "1.0"
+      },
+      "evidence-grader": {
+        "payload": {
+          "agent_id": "evidence-grader",
+          "claim_id": "local-http-smoke-001",
+          "confidence": 0.95,
+          "level": "direct",
+          "rationale": "The normalized claim appears explicitly in the supplied excerpt.",
+          "sources": [
+            {
+              "locator": "Results, paragraph 2",
+              "source_id": "doi:local-smoke-example",
+              "title": "Local HTTP smoke-test source"
+            }
+          ]
+        },
+        "product_type": "evidence-finding",
+        "schema_version": "1.0"
+      },
+      "contradiction-scout": {
+        "payload": {
+          "agent_id": "contradiction-scout",
+          "claim_id": "local-http-smoke-001",
+          "indicators": [],
+          "status": "none-found"
+        },
+        "product_type": "contradiction-check",
+        "schema_version": "1.0"
+      }
+    }
+  }
+}
