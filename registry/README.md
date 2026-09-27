@@ -31,7 +31,7 @@
 
 | 顺序 | 文件 | 协议端点 | 角色 |
 |---|---|---|---|
-| 1 | `evidence-audit-leader.draft.json` | `HTTP_JSON` | 用户入口与协作总控 |
+| 1 | `evidence-audit-leader.draft.json` | `JSONRPC` | 可被上游智能体调用的协作总控；网页继续使用 `/audit` |
 | 2 | `source-verifier.draft.json` | `JSONRPC` | AIP Partner，来源可追踪性检查 |
 | 3 | `evidence-grader.draft.json` | `JSONRPC` | AIP Partner，证据支持强度分级 |
 | 4 | `contradiction-scout.draft.json` | `JSONRPC` | AIP Partner，冲突侦测 |

@@ -27,8 +27,8 @@
   },
   "endPoints": [
     {
-      "url": "https://replace-before-submission.invalid/evidence-mesh/v1",
-      "transport": "HTTP_JSON",
+      "url": "https://replace-before-submission.invalid/rpc",
+      "transport": "JSONRPC",
       "security": [
         {
           "mtls": []

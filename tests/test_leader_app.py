@@ -1,7 +1,11 @@
+import json
 import unittest
 from unittest.mock import AsyncMock, patch
+import uuid
 
 import httpx
+from acps_sdk.aip import TaskState, TextDataItem
+from acps_sdk.aip.aip_rpc_client import AipRpcClient
 
 from evidence_mesh.leader_app import app
 
@@ -55,6 +59,54 @@ class LeaderAppTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["decision"], "supported")
         mocked_audit.assert_awaited_once()
+
+    @patch("evidence_mesh.leader_app.audit_claim", new_callable=AsyncMock)
+    async def test_leader_exposes_real_aip_jsonrpc(self, mocked_audit) -> None:
+        mocked_audit.return_value = {
+            "schema_version": "1.0",
+            "product_type": "evidence-passport",
+            "claim_id": "claim-aip-leader",
+            "decision": "needs-review",
+        }
+        payload = {
+            "schema_version": "1.0",
+            "claim_id": "claim-aip-leader",
+            "claim_text": "处理导致细胞死亡",
+            "source": {
+                "source_id": "demo:leader-aip",
+                "title": "Synthetic AIP test",
+                "locator": "test fixture",
+            },
+            "source_excerpt": "结果提示处理与细胞死亡相关。",
+        }
+        client = AipRpcClient(
+            "http://leader.test/rpc",
+            "test-upstream-leader",
+            transport=httpx.ASGITransport(app=app),
+            identity_binding_enabled=False,
+        )
+        session_id = f"session-{uuid.uuid4()}"
+        task_id = f"task-{uuid.uuid4()}"
+        try:
+            started = await client.start_task(
+                session_id,
+                json.dumps(payload, ensure_ascii=False),
+                task_id=task_id,
+            )
+            self.assertEqual(started.status.state, TaskState.AwaitingCompletion)
+            completed = await client.complete_task(task_id, session_id)
+            self.assertEqual(completed.status.state, TaskState.Completed)
+            product_text = next(
+                item.text
+                for product in completed.products or []
+                for item in product.dataItems
+                if isinstance(item, TextDataItem)
+            )
+            product = json.loads(product_text)
+            self.assertEqual(product["product_type"], "evidence-passport")
+            self.assertEqual(product["claim_id"], "claim-aip-leader")
+        finally:
+            await client.close()
 
 
 if __name__ == "__main__":

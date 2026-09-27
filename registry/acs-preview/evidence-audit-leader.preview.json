@@ -14,8 +14,8 @@
   "securitySchemes": {},
   "endPoints": [
     {
-      "url": "https://preview-host.invalid",
-      "transport": "HTTP_JSON"
+      "url": "https://preview-host.invalid/rpc",
+      "transport": "JSONRPC"
     }
   ],
   "capabilities": {

@@ -93,8 +93,11 @@ https://<PUBLIC_HOST>/contradiction-scout/health
 https://<PUBLIC_HOST>/source-verifier/rpc
 https://<PUBLIC_HOST>/evidence-grader/rpc
 https://<PUBLIC_HOST>/contradiction-scout/rpc
-https://<PUBLIC_HOST>/audit
+https://<PUBLIC_HOST>/rpc
 ```
+
+其中 `/rpc` 是 Registry ACS 声明的 AIP JSON-RPC 入口；`/audit` 继续作为网页前端使用的
+普通 JSON HTTP 接口，不写入 ACS。
 
 阶段 A 的 Partner 身份绑定暂时关闭，只用于确认公网路由和 HTTPS，不是最终安全验收。
 不要处理真实敏感数据，也不要把它描述成 mTLS 或梧桐验收通过。

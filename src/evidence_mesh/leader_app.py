@@ -8,12 +8,22 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from acps_sdk.aip import Product, TaskResult, TaskState, TextDataItem
+from acps_sdk.aip.aip_peer_cert import AipPeerCertificateMiddleware
+from acps_sdk.aip.aip_rpc_server import (
+    CommandHandlers,
+    DefaultHandlers,
+    TaskManager,
+    add_aip_rpc_router,
+)
+
 from .contracts import request_from_json
 from .leader import PartnerTarget, audit_claim
 from .runtime_config import build_client_ssl_context, leader_identity, required_env
 
 
 app = FastAPI(title="Evidence Mesh Leader", version="0.1.0")
+app.add_middleware(AipPeerCertificateMiddleware)
 STATIC_DIR = Path(__file__).with_name("static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -75,3 +85,66 @@ async def audit(payload: dict) -> dict:
         raise HTTPException(status_code=422, detail=str(error)) from error
 
     return await audit_claim(request_text, configured_targets())
+
+
+async def aip_on_start(command, task: TaskResult | None) -> TaskResult:
+    """Expose the Leader through the same AIP JSON-RPC lifecycle as Partners."""
+
+    current = await DefaultHandlers.start(command, task)
+    if task is not None:
+        return current
+
+    local_aic, _ = leader_identity()
+    current.senderId = local_aic
+    try:
+        request_text = next(
+            item.text
+            for item in command.dataItems or []
+            if isinstance(item, TextDataItem) and item.text.strip()
+        )
+        request_from_json(request_text)
+        passport = await audit_claim(request_text, configured_targets())
+    except (StopIteration, ValueError, json.JSONDecodeError) as error:
+        return TaskManager.update_task_status(
+            current.taskId,
+            TaskState.Failed,
+            [TextDataItem(text=f"invalid-request: {error}")],
+        )
+
+    TaskManager.set_products(
+        current.taskId,
+        [
+            Product(
+                id=f"evidence-audit-leader-{current.taskId}",
+                name="evidence-passport",
+                description="Aggregated Evidence Passport from the Leader",
+                dataItems=[
+                    TextDataItem(
+                        text=json.dumps(passport, ensure_ascii=False, sort_keys=True)
+                    )
+                ],
+            )
+        ],
+    )
+    return TaskManager.update_task_status(
+        current.taskId,
+        TaskState.AwaitingCompletion,
+        [TextDataItem(text="Evidence Passport ready for caller confirmation.")],
+    )
+
+
+_leader_aic, _leader_identity_binding_enabled = leader_identity()
+_aip_handlers = CommandHandlers(
+    on_start=aip_on_start,
+    on_get=DefaultHandlers.get,
+    on_cancel=DefaultHandlers.cancel,
+    on_complete=DefaultHandlers.complete,
+    on_continue=DefaultHandlers.continue_,
+)
+add_aip_rpc_router(
+    app,
+    "/rpc",
+    _aip_handlers,
+    local_aic=_leader_aic,
+    identity_binding_enabled=_leader_identity_binding_enabled,
+)
