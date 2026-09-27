@@ -68,7 +68,8 @@ def main() -> int:
         if assigned_aic:
             raw["entityMeta"]["validationBoundary"] = (
                 "Registry AIC, EAB and platform-issued certificates acquired; "
-                "public mTLS boundary verified; Discovery and AMP validation remain pending."
+                "public mTLS boundary and Discovery publication verified; "
+                "AMP validation remains pending."
             )
         else:
             raw["entityMeta"]["validationBoundary"] = (
