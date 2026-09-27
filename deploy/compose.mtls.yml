@@ -15,7 +15,7 @@ services:
     ports:
       - "8441:8441"
     volumes:
-      - ./secrets/source-verifier:/run/acps:ro
+      - ${ACPS_SECRETS_DIR:-./secrets}/source-verifier:/run/acps:ro
     restart: unless-stopped
 
   evidence-grader:
@@ -34,7 +34,7 @@ services:
     ports:
       - "8442:8442"
     volumes:
-      - ./secrets/evidence-grader:/run/acps:ro
+      - ${ACPS_SECRETS_DIR:-./secrets}/evidence-grader:/run/acps:ro
     restart: unless-stopped
 
   contradiction-scout:
@@ -53,7 +53,7 @@ services:
     ports:
       - "8443:8443"
     volumes:
-      - ./secrets/contradiction-scout:/run/acps:ro
+      - ${ACPS_SECRETS_DIR:-./secrets}/contradiction-scout:/run/acps:ro
     restart: unless-stopped
 
   leader:
@@ -73,7 +73,7 @@ services:
       AIP_CLIENT_CERT_FILE: /run/acps/client-cert.pem
       AIP_CLIENT_KEY_FILE: /run/acps/client-key.pem
     volumes:
-      - ./secrets/leader:/run/acps:ro
+      - ${ACPS_SECRETS_DIR:-./secrets}/leader:/run/acps:ro
     extra_hosts:
       - "${PUBLIC_HOST:?set PUBLIC_HOST}:host-gateway"
     depends_on:
@@ -106,7 +106,7 @@ services:
     ports:
       - "8440:8440"
     volumes:
-      - ./secrets/leader:/run/acps:ro
+      - ${ACPS_SECRETS_DIR:-./secrets}/leader:/run/acps:ro
     extra_hosts:
       - "${PUBLIC_HOST:?set PUBLIC_HOST}:host-gateway"
     depends_on:
