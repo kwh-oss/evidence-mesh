@@ -17,6 +17,7 @@ from acps_sdk.aip.aip_rpc_server import (
     add_aip_rpc_router,
 )
 
+from .amp_observability import install_amp_observability
 from .contracts import request_from_json
 from .leader import PartnerTarget, audit_claim
 from .runtime_config import build_client_ssl_context, leader_identity, required_env
@@ -105,11 +106,29 @@ async def aip_on_start(command, task: TaskResult | None) -> TaskResult:
         request_from_json(request_text)
         passport = await audit_claim(request_text, configured_targets())
     except (StopIteration, ValueError, json.JSONDecodeError) as error:
+        if _amp is not None:
+            await _amp.emit_task_result(
+                actor_aic=getattr(command, "senderId", None),
+                task_id=current.taskId,
+                session_id=getattr(command, "sessionId", None),
+                success=False,
+                reason="invalid-request",
+            )
         return TaskManager.update_task_status(
             current.taskId,
             TaskState.Failed,
             [TextDataItem(text=f"invalid-request: {error}")],
         )
+    except Exception:
+        if _amp is not None:
+            await _amp.emit_task_result(
+                actor_aic=getattr(command, "senderId", None),
+                task_id=current.taskId,
+                session_id=getattr(command, "sessionId", None),
+                success=False,
+                reason="orchestration-error",
+            )
+        raise
 
     TaskManager.set_products(
         current.taskId,
@@ -126,6 +145,14 @@ async def aip_on_start(command, task: TaskResult | None) -> TaskResult:
             )
         ],
     )
+    if _amp is not None:
+        await _amp.emit_task_result(
+            actor_aic=getattr(command, "senderId", None),
+            task_id=current.taskId,
+            session_id=getattr(command, "sessionId", None),
+            success=True,
+            reason="evidence-passport-ready",
+        )
     return TaskManager.update_task_status(
         current.taskId,
         TaskState.AwaitingCompletion,
@@ -134,6 +161,9 @@ async def aip_on_start(command, task: TaskResult | None) -> TaskResult:
 
 
 _leader_aic, _leader_identity_binding_enabled = leader_identity()
+_amp = install_amp_observability(
+    app, aic=_leader_aic, agent_name="evidence-audit-leader"
+)
 _aip_handlers = CommandHandlers(
     on_start=aip_on_start,
     on_get=DefaultHandlers.get,

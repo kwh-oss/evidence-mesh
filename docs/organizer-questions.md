@@ -34,4 +34,7 @@
 - 一份当前 Registry 网页可直接提交的 ACS JSON 示例；
 - SDK v2.2.0 的完整 mTLS Direct RPC 部署示例；
 - 比赛环境 AMP 上报账号、证书申请和验收检查清单；
+- 外部参赛者部署的 Agent 应如何接入平台 AMP Forwarder：请提供 Kafka/TLS 或受支持的
+  采集方式、日志目录约定，以及 Monitor OIDC issuer/client_id。当前公开 Monitor 只有
+  查询 API，没有 Agent 直传 API，Registry bearer token 查询会返回 401。
 - 是否允许同一公网主机承载多个 AIC 的明确答复。

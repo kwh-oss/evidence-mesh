@@ -188,5 +188,12 @@ docker compose --env-file deploy/.env.server -f deploy/compose.review.yml up -d
 - 主办方对“先提交带什么 endpoint 的 ACS，后取得证书”的准确要求；
 - AMP Kafka/TLS 凭据及比赛环境的日志上报要求。
 
+### AMP Agent 端接入
+
+`compose.mtls.yml` 为四个 AIP 服务启用标准 heartbeat 与 audit Emitter。日志以绑定目录
+写入 `${AMP_LOG_ROOT:-./amp-logs}`，audit 使用各智能体的平台证书私钥签名。部署后可用
+`scripts/validate_amp_logs.py` 检查连续心跳、AIC 一致性和签名完整性。该检查只证明
+Agent 端日志头；平台 Monitor 入库仍取决于主办方部署并配置的 Forwarder。
+
 不要把 `.env`、私钥、证书或 EAB 文件提交到仓库。根目录 `.gitignore` 已覆盖这些
 常见敏感文件，但部署时仍应使用宿主机密钥目录或 secret 管理器。

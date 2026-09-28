@@ -11,6 +11,7 @@ __pycache__/
 !**/.env.*.example
 deploy/.env.server
 deploy/secrets/
+deploy/amp-logs/
 registry/acs-private/
 *.pem
 *.key

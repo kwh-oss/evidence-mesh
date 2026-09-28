@@ -37,7 +37,8 @@ Flux 当前是 WIT 发行包和文档门户，不是已证实的拖拽式在线�
 - [x] 实现用户可调用的最小 HTTP 产品入口与 Evidence Passport JSON
 - [x] 完成三个 Partner 的真实跨进程 HTTP 联调
 - [x] 实现面向非技术用户的表单与 Evidence Passport 可视化页面（本地 MVP）
-- [ ] 接入 Discovery、身份绑定、mTLS 与 AMP 后完成线上业务闭环
+- [x] 接入 Discovery、身份绑定与 mTLS；完成 AMP heartbeat/audit 头部接入和部署验证
+- [ ] 获得官方 Forwarder/Monitor OIDC 参数后验证 AMP 平台入库与 liveness 查询
 - [x] 建立首版测试指标和失败场景
 
 ## M3：梧桐接入
@@ -48,7 +49,8 @@ Flux 当前是 WIT 发行包和文档门户，不是已证实的拖拽式在线�
 - [x] 完成自有域名 DNS、可信 HTTPS、三个 Partner AIP-RPC 与 Leader 端到端验证
 - [ ] Registry 创建草稿并提交审核
 - [ ] 获得 AIC、EAB 与 mTLS 证书
-- [ ] 完成 Discovery、Direct/Group 调用与 AMP 日志
+- [x] 完成 Discovery、Direct 调用与 AMP 本地标准日志（含连续心跳和签名审计）
+- [ ] Group 调用及官方 AMP Forwarder 入库验证
 - [ ] 留存后台访问量、交互记录和截图
 
 ## M4：作品与材料

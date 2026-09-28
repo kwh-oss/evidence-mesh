@@ -8,7 +8,9 @@ WORKDIR /app
 
 ARG ACPS_COMMUNITY_TAG=v2.2.0
 RUN python -m pip install --no-cache-dir \
-    "https://github.com/AIP-PUB/ACPs-community/archive/refs/tags/${ACPS_COMMUNITY_TAG}.zip#subdirectory=acps-sdk"
+    "https://github.com/AIP-PUB/ACPs-community/archive/refs/tags/${ACPS_COMMUNITY_TAG}.zip#subdirectory=acps-sdk" \
+    cryptography \
+    jcs
 
 COPY src /app/src
 

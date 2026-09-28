@@ -12,10 +12,16 @@ services:
       AIP_SERVER_CA_FILE: /run/acps/trust-bundle.pem
       AIP_SERVER_CERT_FILE: /run/acps/server-cert.pem
       AIP_SERVER_KEY_FILE: /run/acps/server-key.pem
+      AMP_ENABLED: "true"
+      AMP_LOG_DIR: /var/log/acps
+      AMP_HEARTBEAT_INTERVAL_SECONDS: "15"
+      AMP_AUDIT_CERT_FILE: /run/acps/server-cert.pem
+      AMP_AUDIT_KEY_FILE: /run/acps/server-key.pem
     ports:
       - "8441:8441"
     volumes:
       - ${ACPS_SECRETS_DIR:-./secrets}/source-verifier:/run/acps:ro
+      - ${AMP_LOG_ROOT:-./amp-logs}/source-verifier:/var/log/acps
     restart: unless-stopped
 
   evidence-grader:
@@ -31,10 +37,16 @@ services:
       AIP_SERVER_CA_FILE: /run/acps/trust-bundle.pem
       AIP_SERVER_CERT_FILE: /run/acps/server-cert.pem
       AIP_SERVER_KEY_FILE: /run/acps/server-key.pem
+      AMP_ENABLED: "true"
+      AMP_LOG_DIR: /var/log/acps
+      AMP_HEARTBEAT_INTERVAL_SECONDS: "15"
+      AMP_AUDIT_CERT_FILE: /run/acps/server-cert.pem
+      AMP_AUDIT_KEY_FILE: /run/acps/server-key.pem
     ports:
       - "8442:8442"
     volumes:
       - ${ACPS_SECRETS_DIR:-./secrets}/evidence-grader:/run/acps:ro
+      - ${AMP_LOG_ROOT:-./amp-logs}/evidence-grader:/var/log/acps
     restart: unless-stopped
 
   contradiction-scout:
@@ -50,10 +62,16 @@ services:
       AIP_SERVER_CA_FILE: /run/acps/trust-bundle.pem
       AIP_SERVER_CERT_FILE: /run/acps/server-cert.pem
       AIP_SERVER_KEY_FILE: /run/acps/server-key.pem
+      AMP_ENABLED: "true"
+      AMP_LOG_DIR: /var/log/acps
+      AMP_HEARTBEAT_INTERVAL_SECONDS: "15"
+      AMP_AUDIT_CERT_FILE: /run/acps/server-cert.pem
+      AMP_AUDIT_KEY_FILE: /run/acps/server-key.pem
     ports:
       - "8443:8443"
     volumes:
       - ${ACPS_SECRETS_DIR:-./secrets}/contradiction-scout:/run/acps:ro
+      - ${AMP_LOG_ROOT:-./amp-logs}/contradiction-scout:/var/log/acps
     restart: unless-stopped
 
   leader:
@@ -72,6 +90,7 @@ services:
       AIP_CLIENT_CA_FILE: /run/acps/trust-bundle.pem
       AIP_CLIENT_CERT_FILE: /run/acps/client-cert.pem
       AIP_CLIENT_KEY_FILE: /run/acps/client-key.pem
+      AMP_ENABLED: "false"
     volumes:
       - ${ACPS_SECRETS_DIR:-./secrets}/leader:/run/acps:ro
     extra_hosts:
@@ -103,10 +122,16 @@ services:
       AIP_SERVER_CA_FILE: /run/acps/trust-bundle.pem
       AIP_SERVER_CERT_FILE: /run/acps/server-cert.pem
       AIP_SERVER_KEY_FILE: /run/acps/server-key.pem
+      AMP_ENABLED: "true"
+      AMP_LOG_DIR: /var/log/acps
+      AMP_HEARTBEAT_INTERVAL_SECONDS: "15"
+      AMP_AUDIT_CERT_FILE: /run/acps/server-cert.pem
+      AMP_AUDIT_KEY_FILE: /run/acps/server-key.pem
     ports:
       - "8440:8440"
     volumes:
       - ${ACPS_SECRETS_DIR:-./secrets}/leader:/run/acps:ro
+      - ${AMP_LOG_ROOT:-./amp-logs}/leader:/var/log/acps
     extra_hosts:
       - "${PUBLIC_HOST:?set PUBLIC_HOST}:host-gateway"
     depends_on:

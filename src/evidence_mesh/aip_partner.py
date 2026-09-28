@@ -15,6 +15,7 @@ from acps_sdk.aip.aip_rpc_server import (
 )
 from acps_sdk.aip.aip_peer_cert import AipPeerCertificateMiddleware
 
+from .amp_observability import install_amp_observability
 from .contracts import product_json, request_from_json
 from .runtime_config import partner_identity
 
@@ -27,6 +28,9 @@ def build_partner_app(
 ) -> FastAPI:
     app = FastAPI(title=service_name, version="0.1.0")
     local_aic, identity_binding_enabled = partner_identity(service_name)
+    amp = install_amp_observability(
+        app, aic=local_aic, agent_name=service_name
+    )
     # The SDK reads the authenticated caller AIC from request.state. In a real
     # mTLS deployment AipPeerCertH11Protocol records the TLS peer certificate,
     # and this middleware copies that identity into request.state for the RPC
@@ -49,11 +53,29 @@ def build_partner_app(
             payload = processor(request)
             output = product_json(product_type, payload)
         except (StopIteration, ValueError, json.JSONDecodeError) as error:
+            if amp is not None:
+                await amp.emit_task_result(
+                    actor_aic=getattr(command, "senderId", None),
+                    task_id=current.taskId,
+                    session_id=getattr(command, "sessionId", None),
+                    success=False,
+                    reason="invalid-request",
+                )
             return TaskManager.update_task_status(
                 current.taskId,
                 TaskState.Failed,
                 [TextDataItem(text=f"invalid-request: {error}")],
             )
+        except Exception:
+            if amp is not None:
+                await amp.emit_task_result(
+                    actor_aic=getattr(command, "senderId", None),
+                    task_id=current.taskId,
+                    session_id=getattr(command, "sessionId", None),
+                    success=False,
+                    reason="processing-error",
+                )
+            raise
 
         TaskManager.set_products(
             current.taskId,
@@ -66,6 +88,14 @@ def build_partner_app(
                 )
             ],
         )
+        if amp is not None:
+            await amp.emit_task_result(
+                actor_aic=getattr(command, "senderId", None),
+                task_id=current.taskId,
+                session_id=getattr(command, "sessionId", None),
+                success=True,
+                reason="structured-product-ready",
+            )
         return TaskManager.update_task_status(
             current.taskId,
             TaskState.AwaitingCompletion,
