@@ -26,6 +26,7 @@ from acps_sdk.amp import (
     AuditTarget,
     CertificateAuditSigner,
     HeartbeatEmitter,
+    MessageEmitter,
 )
 
 
@@ -62,7 +63,7 @@ def _certificate_signer() -> CertificateAuditSigner | None:
 
 
 class AmpObservability:
-    """Own the two AMP emitters required for liveness and task audit."""
+    """Own the AMP emitters used by Direct RPC and Group transports."""
 
     def __init__(self, *, aic: str, agent_name: str) -> None:
         log_dir = Path(os.environ["AMP_LOG_DIR"])
@@ -84,6 +85,9 @@ class AmpObservability:
         )
         self.access = AccessEmitter(
             log_dir / f"amp_access_{safe_name}.jsonl", aic=aic
+        )
+        self.message = MessageEmitter(
+            log_dir / f"amp_message_{safe_name}.jsonl", aic=aic
         )
         self._heartbeat_task: asyncio.Task[None] | None = None
 

@@ -14,6 +14,12 @@ from .models import EvidenceFinding, EvidenceLevel
 
 def verify_source(request: AuditRequest) -> SourceCheck:
     issues: list[str] = []
+    if not request.source.source_id.strip():
+        issues.append("source identifier is missing")
+    if not request.source.title.strip():
+        issues.append("source title is missing")
+    if not request.source.locator.strip():
+        issues.append("source locator is missing")
     if len(request.source_excerpt) < 12:
         issues.append("source excerpt is too short for reliable inspection")
     if request.source.locator.lower() in {"unknown", "n/a", "none"}:

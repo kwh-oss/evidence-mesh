@@ -30,10 +30,15 @@
    TLS 握手（无服务端证书），明文 Kafka metadata 和 Fluent Bit 转发则可正常工作；
    官方 AMP 页面示例也未配置 TLS。请问 TLS 是否应使用另一端口，或是否有需要配置的
    CA、客户端证书、SASL 参数？如果当前阶段就是明文 Kafka，请确认后续是否会切换。
+9. Group 基础设施当前公开端点可建立 TLS 连接，但其服务端证书链使用的根 CA 与
+   Registry 下载的 Agent CA 不同。请提供 Group API 与 AMQPS 的官方基础设施 CA、
+   SHA-256 指纹及推荐下载地址，并确认外部接入端点是否为 `wt.ioa.pub:9007` 和
+   `wt.ioa.pub:5671`、vhost 是否为 `acps`。我们不会用跳过证书校验的方式做正式验证。
 
 ## 希望主办方给出的材料
 
 - 一份当前 Registry 网页可直接提交的 ACS JSON 示例；
 - SDK v2.2.0 的完整 mTLS Direct RPC 部署示例；
 - 比赛环境 AMP 传输加密配置和验收检查清单；
+- Group API/AMQPS 基础设施 CA 与外部调用完整示例；
 - 是否允许同一公网主机承载多个 AIC 的明确答复。

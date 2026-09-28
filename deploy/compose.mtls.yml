@@ -17,6 +17,10 @@ services:
       AMP_HEARTBEAT_INTERVAL_SECONDS: "15"
       AMP_AUDIT_CERT_FILE: /run/acps/server-cert.pem
       AMP_AUDIT_KEY_FILE: /run/acps/server-key.pem
+      GROUP_ENABLED: ${GROUP_ENABLED:-false}
+      GROUP_CA_FILE: /run/acps/infrastructure-ca.pem
+      GROUP_CLIENT_CERT_FILE: /run/acps/client-cert.pem
+      GROUP_CLIENT_KEY_FILE: /run/acps/client-key.pem
     ports:
       - "8441:8441"
     volumes:
@@ -42,6 +46,10 @@ services:
       AMP_HEARTBEAT_INTERVAL_SECONDS: "15"
       AMP_AUDIT_CERT_FILE: /run/acps/server-cert.pem
       AMP_AUDIT_KEY_FILE: /run/acps/server-key.pem
+      GROUP_ENABLED: ${GROUP_ENABLED:-false}
+      GROUP_CA_FILE: /run/acps/infrastructure-ca.pem
+      GROUP_CLIENT_CERT_FILE: /run/acps/client-cert.pem
+      GROUP_CLIENT_KEY_FILE: /run/acps/client-key.pem
     ports:
       - "8442:8442"
     volumes:
@@ -67,6 +75,10 @@ services:
       AMP_HEARTBEAT_INTERVAL_SECONDS: "15"
       AMP_AUDIT_CERT_FILE: /run/acps/server-cert.pem
       AMP_AUDIT_KEY_FILE: /run/acps/server-key.pem
+      GROUP_ENABLED: ${GROUP_ENABLED:-false}
+      GROUP_CA_FILE: /run/acps/infrastructure-ca.pem
+      GROUP_CLIENT_CERT_FILE: /run/acps/client-cert.pem
+      GROUP_CLIENT_KEY_FILE: /run/acps/client-key.pem
     ports:
       - "8443:8443"
     volumes:

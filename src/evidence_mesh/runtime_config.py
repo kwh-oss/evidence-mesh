@@ -54,6 +54,18 @@ def build_client_ssl_context() -> ssl.SSLContext:
     return context
 
 
+def build_group_ssl_context() -> ssl.SSLContext:
+    """Build strict TLS 1.3 EXTERNAL-auth context for the platform MQ services."""
+
+    ca_file = _required_file("GROUP_CA_FILE")
+    cert_file = _required_file("GROUP_CLIENT_CERT_FILE")
+    key_file = _required_file("GROUP_CLIENT_KEY_FILE")
+    context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=str(ca_file))
+    context.minimum_version = ssl.TLSVersion.TLSv1_3
+    context.load_cert_chain(certfile=str(cert_file), keyfile=str(key_file))
+    return context
+
+
 def _required_file(name: str) -> Path:
     path = Path(required_env(name)).expanduser()
     if not path.is_file():

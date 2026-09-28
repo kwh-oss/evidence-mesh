@@ -31,10 +31,15 @@ class AuditRequest:
     source_excerpt: str
 
     @classmethod
-    def from_dict(cls, value: dict[str, Any]) -> "AuditRequest":
+    def from_dict(
+        cls, value: dict[str, Any], *, default_claim_id: str | None = None
+    ) -> "AuditRequest":
         source = value.get("source") or {}
         return cls(
-            claim_id=str(value.get("claim_id", "")).strip(),
+            claim_id=(
+                str(value.get("claim_id", "")).strip()
+                or str(default_claim_id or "").strip()
+            ),
             claim_text=str(value.get("claim_text", "")).strip(),
             source=SourceRef(
                 source_id=str(source.get("source_id", "")).strip(),
@@ -70,13 +75,31 @@ class ContradictionCheck:
     indicators: tuple[str, ...]
 
 
-def request_from_json(text: str) -> AuditRequest:
+def request_from_json(
+    text: str, *, default_claim_id: str | None = None
+) -> AuditRequest:
     value = json.loads(text)
     if not isinstance(value, dict):
         raise ValueError("request must be a JSON object")
     if value.get("schema_version") != SCHEMA_VERSION:
         raise ValueError(f"schema_version must be {SCHEMA_VERSION}")
-    return AuditRequest.from_dict(value)
+    return AuditRequest.from_dict(value, default_claim_id=default_claim_id)
+
+
+def request_json(request: AuditRequest) -> str:
+    """Serialize one validated request for downstream Partners."""
+
+    return json.dumps(
+        {
+            "schema_version": SCHEMA_VERSION,
+            "claim_id": request.claim_id,
+            "claim_text": request.claim_text,
+            "source": asdict(request.source),
+            "source_excerpt": request.source_excerpt,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+    )
 
 
 def product_json(product_type: str, payload: Any) -> str:

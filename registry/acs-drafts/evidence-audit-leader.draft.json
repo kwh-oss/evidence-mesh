@@ -4,7 +4,7 @@
   "lastModifiedTime": "2026-09-25T00:00:00+08:00",
   "protocolVersion": "02.02",
   "name": "证链联研总控智能体",
-  "description": "面向科研结论核验的Leader智能体。接收用户提供的待核验结论、来源标识、精确位置和证据原文，并行协调来源核验、证据分级和冲突侦测三个Partner，输出保留AIP任务标识的Evidence Passport。当前版本不自动检索外部文献，不替代专业判断，也不把相关性材料提升为因果证明。",
+  "description": "科研证据核验的推荐单一入口。调用者无需选择子智能体、安排调用顺序或决定由谁汇总；只需提交待核验结论和证据摘录，本智能体会自动并行协调来源核验、证据分级和冲突侦测三个Partner，并输出可追溯Evidence Passport。来源标识、标题和精确位置可以省略，缺失项会在结果中标记为待补充而不会阻止本次核验。当前版本不自动检索外部文献，不替代专业判断。",
   "version": "0.1.0",
   "provider": {
     "countryCode": "CN",
@@ -51,7 +51,7 @@
     {
       "id": "evidence-mesh.audit.orchestrator",
       "name": "科研证据协同核验",
-      "description": "将一条科研结论及其指定证据片段分发给三个专业Partner，并以fail-closed规则聚合为可追溯Evidence Passport。缺失Partner、条件性证据或冲突信号不会被静默判定为支持。",
+      "description": "一键核验入口：调用者提供待核验结论和证据摘录即可，无需指定子智能体或工作流。本智能体自动并行调用三个专业Partner，并以fail-closed规则聚合为Evidence Passport。最小JSON仅需schema_version、claim_text和source_excerpt；claim_id可自动采用AIP taskId，来源元数据可选。",
       "version": "0.1.0",
       "tags": [
         "科研证据",
@@ -62,8 +62,8 @@
         "人工复核"
       ],
       "examples": [
-        "核验这条科研结论是否被所给论文片段直接支持",
-        "检查这条因果结论是否超出了证据原文"
+        "一键核验：结论为‘处理导致细胞死亡’，证据摘录为‘处理组死亡比例升高，但机制尚不明确’",
+        "最小输入示例：{\"schema_version\":\"1.0\",\"claim_text\":\"处理导致细胞死亡\",\"source_excerpt\":\"处理组死亡比例升高，但机制尚不明确\"}"
       ],
       "inputModes": [
         "application/json"

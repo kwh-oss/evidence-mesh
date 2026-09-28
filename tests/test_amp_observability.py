@@ -5,6 +5,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+from acps_sdk.amp import MessageEmitter
+
 from evidence_mesh.amp_observability import AmpObservability
 
 
@@ -57,6 +59,7 @@ class AmpObservabilityTests(unittest.IsolatedAsyncioTestCase):
                 .read_text(encoding="utf-8")
                 .splitlines()[-1]
             )
+            message_path = Path(temp_dir) / "amp_message_test-agent.jsonl"
 
         self.assertEqual(heartbeat["log_type"], "heartbeat")
         self.assertEqual(heartbeat["aic"], "1.2.156.test.agent")
@@ -68,6 +71,8 @@ class AmpObservabilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(access["correlation_id"], "task-1")
         self.assertEqual(access["body"]["caller"]["serviceName"], "leader")
         self.assertEqual(access["body"]["callee"]["serviceName"], "test-agent")
+        self.assertIsInstance(amp.message, MessageEmitter)
+        self.assertFalse(message_path.exists())
 
 
 if __name__ == "__main__":

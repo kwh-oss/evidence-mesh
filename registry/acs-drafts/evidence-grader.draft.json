@@ -4,7 +4,7 @@
   "lastModifiedTime": "2026-09-25T00:00:00+08:00",
   "protocolVersion": "02.02",
   "name": "证链证据分级智能体",
-  "description": "比较待核验科研结论与用户提供的证据原文，将支持关系分为direct、indirect、conditional、unsupported或conflicting，并返回理由、来源和置信度。当前版本是可复核的确定性基线，不判断论文整体质量，不替代统计分析或领域专家结论。",
+  "description": "可独立调用的证据支持强度分级Partner；只需提交待核验结论和证据摘录，不需要调用者指定其他智能体或汇总顺序。返回direct、indirect、conditional、unsupported或conflicting及理由。若需要完整三路核验和最终Evidence Passport，请直接调用证链联研总控智能体。",
   "version": "0.1.0",
   "provider": {
     "countryCode": "CN",
@@ -51,7 +51,7 @@
     {
       "id": "evidence-mesh.evidence.support-grading",
       "name": "科研结论支持强度分级",
-      "description": "依据给定结论和单个证据摘录，识别直接支持、间接支持、条件性支持和不支持，并特别降级因果表述超过相关性证据的情况。输出仅针对所给片段。",
+      "description": "独立专项调用：给出结论和单个证据摘录即可识别直接、间接、条件性、不支持或冲突，并降级因果表述超过相关性证据的情况。完整三路核验请调用证链联研总控智能体；无需由调用者编排多个Partner。",
       "version": "0.1.0",
       "tags": [
         "证据分级",

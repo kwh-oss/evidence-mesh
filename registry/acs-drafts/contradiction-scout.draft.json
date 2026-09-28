@@ -4,7 +4,7 @@
   "lastModifiedTime": "2026-09-25T00:00:00+08:00",
   "protocolVersion": "02.02",
   "name": "证链冲突侦测智能体",
-  "description": "检查待核验科研结论与指定证据摘录之间是否出现方向相反、否定或转折冲突，返回none-found、possible或confirmed状态及触发指标。当前版本不是跨论文系统综述，也不能把未发现冲突解释为结论已经成立。",
+  "description": "可独立调用的结论—证据冲突检查Partner；只需提交待核验结论和证据摘录，不需要调用者指定其他智能体或汇总顺序。返回none-found、possible或confirmed及触发指标。若需要完整三路核验和最终Evidence Passport，请直接调用证链联研总控智能体。",
   "version": "0.1.0",
   "provider": {
     "countryCode": "CN",
@@ -51,7 +51,7 @@
     {
       "id": "evidence-mesh.contradiction.direction-check",
       "name": "结论与证据冲突侦测",
-      "description": "检查结论和给定摘录中的方向反转、明确否定与转折信号，输出结构化冲突状态和指标；不执行全领域文献搜索，也不保证穷尽语义冲突。",
+      "description": "独立专项调用：给出结论和证据摘录即可检查方向反转、明确否定与转折信号。完整三路核验请调用证链联研总控智能体；无需由调用者编排多个Partner，也不执行全领域文献搜索。",
       "version": "0.1.0",
       "tags": [
         "冲突检测",

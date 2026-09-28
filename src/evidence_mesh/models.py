@@ -18,14 +18,6 @@ class SourceRef:
     title: str
     locator: str
 
-    def __post_init__(self) -> None:
-        if not self.source_id.strip():
-            raise ValueError("source_id must not be empty")
-        if not self.title.strip():
-            raise ValueError("title must not be empty")
-        if not self.locator.strip():
-            raise ValueError("locator must not be empty")
-
 
 @dataclass(frozen=True, slots=True)
 class EvidenceFinding:

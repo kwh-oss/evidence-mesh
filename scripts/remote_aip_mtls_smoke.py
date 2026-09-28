@@ -18,17 +18,27 @@ async def main() -> None:
     endpoint = os.getenv(
         "LEADER_MTLS_SMOKE_URL", "https://api.linsixuan.cn:8440/rpc"
     )
+    minimal_input = os.getenv("MINIMAL_INPUT", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
     payload = {
         "schema_version": "1.0",
-        "claim_id": "mtls-smoke",
         "claim_text": "处理组观察到信号升高",
-        "source": {
-            "source_id": "synthetic:mtls-smoke",
-            "title": "Synthetic mTLS smoke fixture",
-            "locator": "fixture paragraph 1",
-        },
         "source_excerpt": "结果显示处理组信号升高，但该观察不单独证明因果关系。",
     }
+    if not minimal_input:
+        payload.update(
+            {
+                "claim_id": "mtls-smoke",
+                "source": {
+                    "source_id": "synthetic:mtls-smoke",
+                    "title": "Synthetic mTLS smoke fixture",
+                    "locator": "fixture paragraph 1",
+                },
+            }
+        )
     session_id = f"session-{uuid.uuid4()}"
     task_id = f"task-{uuid.uuid4()}"
     client = AipRpcClient(
@@ -64,6 +74,16 @@ async def main() -> None:
             raise RuntimeError("Evidence Passport does not contain three Partner tasks")
         if not isinstance(partner_products, dict) or len(partner_products) != 3:
             raise RuntimeError("Evidence Passport does not contain three Partner products")
+        if minimal_input:
+            if product.get("claim_id") != task_id:
+                raise RuntimeError("minimal input did not inherit the AIP task ID")
+            source_product = partner_products.get("source-verifier", {})
+            source_payload = source_product.get("payload", {})
+            issues = source_payload.get("issues", [])
+            if source_payload.get("status") != "incomplete":
+                raise RuntimeError("missing source metadata was not marked incomplete")
+            if not any("source" in str(issue).lower() for issue in issues):
+                raise RuntimeError("missing source metadata was not recorded as an issue")
         print(
             json.dumps(
                 {
@@ -73,6 +93,8 @@ async def main() -> None:
                     "decision": product.get("decision"),
                     "partner_task_count": len(task_ids),
                     "partner_product_count": len(partner_products),
+                    "input_mode": "minimal" if minimal_input else "complete",
+                    "claim_id": product.get("claim_id"),
                 },
                 ensure_ascii=False,
                 sort_keys=True,

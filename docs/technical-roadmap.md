@@ -51,7 +51,9 @@ Flux 当前是 WIT 发行包和文档门户，不是已证实的拖拽式在线�
 - [x] 获得 AIC、EAB 与 mTLS 证书
 - [x] 完成 Discovery、Direct 调用与 AMP 本地标准日志（含连续心跳和签名审计）
 - [x] 官方 AMP Forwarder 入库验证（heartbeat/access/audit）
-- [ ] Group 调用验证
+- [x] 将总控改为普通调用者的推荐单入口，支持最小输入和自动编排
+- [x] 真实 mTLS 四智能体链路回归验证
+- [ ] Group 调用验证（代码与 Partner `clientAuth` 证书已准备，等待官方基础设施 CA）
 - [ ] 留存后台访问量、交互记录和截图
 
 ## M4：作品与材料

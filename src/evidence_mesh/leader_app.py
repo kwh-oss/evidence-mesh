@@ -18,7 +18,7 @@ from acps_sdk.aip.aip_rpc_server import (
 )
 
 from .amp_observability import install_amp_observability, monotonic_ms
-from .contracts import request_from_json
+from .contracts import request_from_json, request_json
 from .leader import PartnerTarget, audit_claim
 from .runtime_config import build_client_ssl_context, leader_identity, required_env
 
@@ -104,8 +104,12 @@ async def aip_on_start(command, task: TaskResult | None) -> TaskResult:
             for item in command.dataItems or []
             if isinstance(item, TextDataItem) and item.text.strip()
         )
-        request_from_json(request_text)
-        passport = await audit_claim(request_text, configured_targets(), _amp)
+        request = request_from_json(
+            request_text, default_claim_id=current.taskId
+        )
+        passport = await audit_claim(
+            request_json(request), configured_targets(), _amp
+        )
     except (StopIteration, ValueError, json.JSONDecodeError) as error:
         if _amp is not None:
             await _amp.emit_access(

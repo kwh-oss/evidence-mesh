@@ -17,6 +17,7 @@ from acps_sdk.aip.aip_peer_cert import AipPeerCertificateMiddleware
 
 from .amp_observability import install_amp_observability, monotonic_ms
 from .contracts import product_json, request_from_json
+from .group_partner import install_group_partner_endpoint
 from .runtime_config import partner_identity
 
 
@@ -50,7 +51,9 @@ def build_partner_app(
                 for item in command.dataItems or []
                 if isinstance(item, TextDataItem) and item.text.strip()
             )
-            request = request_from_json(request_text)
+            request = request_from_json(
+                request_text, default_claim_id=current.taskId
+            )
             payload = processor(request)
             output = product_json(product_type, payload)
         except (StopIteration, ValueError, json.JSONDecodeError) as error:
@@ -150,6 +153,15 @@ def build_partner_app(
         local_aic=local_aic,
         identity_binding_enabled=identity_binding_enabled,
     )
+    group_enabled = install_group_partner_endpoint(
+        app,
+        local_aic=local_aic,
+        identity_binding_enabled=identity_binding_enabled,
+        service_name=service_name,
+        product_type=product_type,
+        processor=processor,
+        amp=amp,
+    )
 
     @app.get("/health")
     async def health() -> dict[str, str]:
@@ -157,6 +169,7 @@ def build_partner_app(
             "status": "ok",
             "service": service_name,
             "identity_binding": "enabled" if identity_binding_enabled else "disabled",
+            "group": "enabled" if group_enabled else "disabled",
         }
 
     return app
