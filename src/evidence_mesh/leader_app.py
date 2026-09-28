@@ -17,7 +17,7 @@ from acps_sdk.aip.aip_rpc_server import (
     add_aip_rpc_router,
 )
 
-from .amp_observability import install_amp_observability
+from .amp_observability import install_amp_observability, monotonic_ms
 from .contracts import request_from_json
 from .leader import PartnerTarget, audit_claim
 from .runtime_config import build_client_ssl_context, leader_identity, required_env
@@ -91,6 +91,7 @@ async def audit(payload: dict) -> dict:
 async def aip_on_start(command, task: TaskResult | None) -> TaskResult:
     """Expose the Leader through the same AIP JSON-RPC lifecycle as Partners."""
 
+    started_at = monotonic_ms()
     current = await DefaultHandlers.start(command, task)
     if task is not None:
         return current
@@ -104,9 +105,20 @@ async def aip_on_start(command, task: TaskResult | None) -> TaskResult:
             if isinstance(item, TextDataItem) and item.text.strip()
         )
         request_from_json(request_text)
-        passport = await audit_claim(request_text, configured_targets())
+        passport = await audit_claim(request_text, configured_targets(), _amp)
     except (StopIteration, ValueError, json.JSONDecodeError) as error:
         if _amp is not None:
+            await _amp.emit_access(
+                caller_aic=getattr(command, "senderId", None),
+                caller_service="aip-caller",
+                callee_aic=local_aic,
+                callee_service="evidence-audit-leader",
+                task_id=current.taskId,
+                session_id=getattr(command, "sessionId", None),
+                url="/rpc",
+                duration_ms=monotonic_ms() - started_at,
+                status_code=422,
+            )
             await _amp.emit_task_result(
                 actor_aic=getattr(command, "senderId", None),
                 task_id=current.taskId,
@@ -121,6 +133,17 @@ async def aip_on_start(command, task: TaskResult | None) -> TaskResult:
         )
     except Exception:
         if _amp is not None:
+            await _amp.emit_access(
+                caller_aic=getattr(command, "senderId", None),
+                caller_service="aip-caller",
+                callee_aic=local_aic,
+                callee_service="evidence-audit-leader",
+                task_id=current.taskId,
+                session_id=getattr(command, "sessionId", None),
+                url="/rpc",
+                duration_ms=monotonic_ms() - started_at,
+                status_code=500,
+            )
             await _amp.emit_task_result(
                 actor_aic=getattr(command, "senderId", None),
                 task_id=current.taskId,
@@ -146,6 +169,17 @@ async def aip_on_start(command, task: TaskResult | None) -> TaskResult:
         ],
     )
     if _amp is not None:
+        await _amp.emit_access(
+            caller_aic=getattr(command, "senderId", None),
+            caller_service="aip-caller",
+            callee_aic=local_aic,
+            callee_service="evidence-audit-leader",
+            task_id=current.taskId,
+            session_id=getattr(command, "sessionId", None),
+            url="/rpc",
+            duration_ms=monotonic_ms() - started_at,
+            status_code=200,
+        )
         await _amp.emit_task_result(
             actor_aic=getattr(command, "senderId", None),
             task_id=current.taskId,

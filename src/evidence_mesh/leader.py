@@ -6,11 +6,14 @@ import json
 import ssl
 import uuid
 from typing import Any
+import time
 
 import httpx
 
 from acps_sdk.aip import TaskState, TextDataItem
 from acps_sdk.aip.aip_rpc_client import AipRpcClient
+
+from .amp_observability import AmpObservability
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,7 +27,11 @@ class PartnerTarget:
     ssl_context: ssl.SSLContext | None = None
 
 
-async def audit_claim(request_json: str, targets: list[PartnerTarget]) -> dict[str, Any]:
+async def audit_claim(
+    request_json: str,
+    targets: list[PartnerTarget],
+    amp: AmpObservability | None = None,
+) -> dict[str, Any]:
     """Delegate one claim in parallel and return a fail-closed Evidence Passport."""
     expected = {"source-verifier", "evidence-grader", "contradiction-scout"}
     names = {target.name for target in targets}
@@ -32,7 +39,7 @@ async def audit_claim(request_json: str, targets: list[PartnerTarget]) -> dict[s
         raise ValueError(f"targets must be exactly {sorted(expected)}; got {sorted(names)}")
 
     results = await asyncio.gather(
-        *(_call_partner(target, request_json) for target in targets),
+        *(_call_partner(target, request_json, amp) for target in targets),
         return_exceptions=True,
     )
 
@@ -63,9 +70,15 @@ async def audit_claim(request_json: str, targets: list[PartnerTarget]) -> dict[s
     }
 
 
-async def _call_partner(target: PartnerTarget, request_json: str) -> dict[str, Any]:
+async def _call_partner(
+    target: PartnerTarget,
+    request_json: str,
+    amp: AmpObservability | None = None,
+) -> dict[str, Any]:
     session_id = f"session-{uuid.uuid4()}"
     task_id = f"task-{uuid.uuid4()}"
+    started_at = time.monotonic() * 1000
+    status_code = 500
     client = AipRpcClient(
         target.url,
         target.leader_aic,
@@ -77,12 +90,14 @@ async def _call_partner(target: PartnerTarget, request_json: str) -> dict[str, A
     try:
         started = await client.start_task(session_id, request_json, task_id=task_id)
         if started.status.state == TaskState.Failed:
+            status_code = 422
             return {
                 "task_id": task_id,
                 "state": TaskState.Failed.value,
                 "product": {},
             }
         if started.status.state != TaskState.AwaitingCompletion:
+            status_code = 409
             return {
                 "task_id": task_id,
                 "state": started.status.state.value,
@@ -95,6 +110,7 @@ async def _call_partner(target: PartnerTarget, request_json: str) -> dict[str, A
             for item in product.dataItems
             if isinstance(item, TextDataItem)
         )
+        status_code = 200
         return {
             "task_id": task_id,
             "state": completed.status.state.value,
@@ -102,6 +118,18 @@ async def _call_partner(target: PartnerTarget, request_json: str) -> dict[str, A
         }
     finally:
         await client.close()
+        if amp is not None:
+            await amp.emit_access(
+                caller_aic=target.leader_aic,
+                caller_service="evidence-audit-leader",
+                callee_aic=target.expected_partner_aic,
+                callee_service=target.name,
+                task_id=task_id,
+                session_id=session_id,
+                url=target.url,
+                duration_ms=(time.monotonic() * 1000) - started_at,
+                status_code=status_code,
+            )
 
 
 def _decide(products: dict[str, dict[str, Any]], risks: list[str]) -> str:

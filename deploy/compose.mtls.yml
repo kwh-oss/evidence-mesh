@@ -140,6 +140,22 @@ services:
       - contradiction-scout
     restart: unless-stopped
 
+  amp-forwarder:
+    image: fluent/fluent-bit:4.2.2
+    environment:
+      AMP_KAFKA_BROKERS: ${AMP_KAFKA_BROKERS:-wt.ioa.pub:19092}
+    volumes:
+      - ./fluent-bit-amp.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ./fluent-bit-amp-parsers.conf:/fluent-bit/etc/amp-parsers.conf:ro
+      - ${AMP_LOG_ROOT:-./amp-logs}:/var/log/acps:ro
+      - fluent_bit_state:/var/lib/fluent-bit
+    depends_on:
+      - source-verifier
+      - evidence-grader
+      - contradiction-scout
+      - leader-aip
+    restart: unless-stopped
+
   gateway:
     image: caddy:2-alpine
     environment:
@@ -158,3 +174,4 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+  fluent_bit_state:

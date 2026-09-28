@@ -7,11 +7,17 @@ import contextlib
 import logging
 import os
 import re
+import time
 from pathlib import Path
 
 from fastapi import FastAPI
 
 from acps_sdk.amp import (
+    AccessBody,
+    AccessEmitter,
+    AccessParticipant,
+    AccessRequest,
+    AccessResponse,
     AuditAction,
     AuditActor,
     AuditBody,
@@ -76,6 +82,9 @@ class AmpObservability:
             aic=aic,
             signer=_certificate_signer(),
         )
+        self.access = AccessEmitter(
+            log_dir / f"amp_access_{safe_name}.jsonl", aic=aic
+        )
         self._heartbeat_task: asyncio.Task[None] | None = None
 
     async def start(self) -> None:
@@ -123,6 +132,43 @@ class AmpObservability:
             trace_id=session_id,
             correlation_id=task_id,
         )
+
+    async def emit_access(
+        self,
+        *,
+        caller_aic: str | None,
+        caller_service: str,
+        callee_aic: str | None,
+        callee_service: str,
+        task_id: str,
+        session_id: str | None,
+        url: str,
+        duration_ms: float,
+        status_code: int,
+    ) -> None:
+        """Emit one AIP access edge using taskId as the required correlationId."""
+
+        await self.access.emit(
+            AccessBody(
+                durationMs=duration_ms,
+                request=AccessRequest(method="Start", url=url, route="/rpc"),
+                response=AccessResponse(statusCode=status_code),
+                caller=AccessParticipant(
+                    aic=caller_aic, serviceName=caller_service
+                ),
+                callee=AccessParticipant(
+                    aic=callee_aic, serviceName=callee_service
+                ),
+            ),
+            trace_id=session_id,
+            correlation_id=task_id,
+        )
+
+
+def monotonic_ms() -> float:
+    """Expose one clock helper so protocol handlers use a consistent unit."""
+
+    return time.monotonic() * 1000
 
 
 def install_amp_observability(

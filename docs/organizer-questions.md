@@ -26,15 +26,14 @@
 7. Partner 前置使用 Nginx/Caddy 等反向代理终止 mTLS 时，如何把客户端证书传递给
    FastAPI/ASGI，才能让 SDK 的 `get_request_peer_aic()` 正确读取证书 AIC？主办方是否
    提供推荐部署模板？
-8. 官方指南写明 AMP access 日志以 `taskId` 填入 `correlationId`，双方匹配算一次调用。
-   参赛者接入 `wt.ioa.pub:19092` 时需要向主办方申请哪些 Kafka/TLS 凭据？
+8. 主办方答复称外部 AMP 端点 `wt.ioa.pub:19092` 为 Kafka/TLS，但当前该端口会终止
+   TLS 握手（无服务端证书），明文 Kafka metadata 和 Fluent Bit 转发则可正常工作；
+   官方 AMP 页面示例也未配置 TLS。请问 TLS 是否应使用另一端口，或是否有需要配置的
+   CA、客户端证书、SASL 参数？如果当前阶段就是明文 Kafka，请确认后续是否会切换。
 
 ## 希望主办方给出的材料
 
 - 一份当前 Registry 网页可直接提交的 ACS JSON 示例；
 - SDK v2.2.0 的完整 mTLS Direct RPC 部署示例；
-- 比赛环境 AMP 上报账号、证书申请和验收检查清单；
-- 外部参赛者部署的 Agent 应如何接入平台 AMP Forwarder：请提供 Kafka/TLS 或受支持的
-  采集方式、日志目录约定，以及 Monitor OIDC issuer/client_id。当前公开 Monitor 只有
-  查询 API，没有 Agent 直传 API，Registry bearer token 查询会返回 401。
+- 比赛环境 AMP 传输加密配置和验收检查清单；
 - 是否允许同一公网主机承载多个 AIC 的明确答复。

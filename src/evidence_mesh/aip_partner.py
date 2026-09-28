@@ -15,7 +15,7 @@ from acps_sdk.aip.aip_rpc_server import (
 )
 from acps_sdk.aip.aip_peer_cert import AipPeerCertificateMiddleware
 
-from .amp_observability import install_amp_observability
+from .amp_observability import install_amp_observability, monotonic_ms
 from .contracts import product_json, request_from_json
 from .runtime_config import partner_identity
 
@@ -38,6 +38,7 @@ def build_partner_app(
     app.add_middleware(AipPeerCertificateMiddleware)
 
     async def on_start(command, task: TaskResult | None) -> TaskResult:
+        started_at = monotonic_ms()
         current = await DefaultHandlers.start(command, task)
         if task is not None:
             return current
@@ -54,6 +55,17 @@ def build_partner_app(
             output = product_json(product_type, payload)
         except (StopIteration, ValueError, json.JSONDecodeError) as error:
             if amp is not None:
+                await amp.emit_access(
+                    caller_aic=getattr(command, "senderId", None),
+                    caller_service="aip-caller",
+                    callee_aic=local_aic,
+                    callee_service=service_name,
+                    task_id=current.taskId,
+                    session_id=getattr(command, "sessionId", None),
+                    url="/rpc",
+                    duration_ms=monotonic_ms() - started_at,
+                    status_code=422,
+                )
                 await amp.emit_task_result(
                     actor_aic=getattr(command, "senderId", None),
                     task_id=current.taskId,
@@ -68,6 +80,17 @@ def build_partner_app(
             )
         except Exception:
             if amp is not None:
+                await amp.emit_access(
+                    caller_aic=getattr(command, "senderId", None),
+                    caller_service="aip-caller",
+                    callee_aic=local_aic,
+                    callee_service=service_name,
+                    task_id=current.taskId,
+                    session_id=getattr(command, "sessionId", None),
+                    url="/rpc",
+                    duration_ms=monotonic_ms() - started_at,
+                    status_code=500,
+                )
                 await amp.emit_task_result(
                     actor_aic=getattr(command, "senderId", None),
                     task_id=current.taskId,
@@ -89,6 +112,17 @@ def build_partner_app(
             ],
         )
         if amp is not None:
+            await amp.emit_access(
+                caller_aic=getattr(command, "senderId", None),
+                caller_service="evidence-audit-leader",
+                callee_aic=local_aic,
+                callee_service=service_name,
+                task_id=current.taskId,
+                session_id=getattr(command, "sessionId", None),
+                url="/rpc",
+                duration_ms=monotonic_ms() - started_at,
+                status_code=200,
+            )
             await amp.emit_task_result(
                 actor_aic=getattr(command, "senderId", None),
                 task_id=current.taskId,

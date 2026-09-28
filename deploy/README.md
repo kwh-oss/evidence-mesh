@@ -146,6 +146,29 @@ https://<PUBLIC_HOST>:8443/rpc
 只有真实证书握手、AIC身份匹配、Discovery调用和AMP记录全部验证后，才能作为平台
 接入证据。
 
+### AMP Kafka Forwarder
+
+`compose.mtls.yml` 同时启动 `fluent/fluent-bit:4.2.2`，从四个 Agent 的只读日志目录
+采集 `heartbeat`、`access` 和 `audit` JSONL，并分别发送至：
+
+```text
+amp.heartbeat
+amp.access
+amp.audit
+```
+
+Broker 默认为官方外部端点 `wt.ioa.pub:19092`，可用环境变量
+`AMP_KAFKA_BROKERS` 覆盖。tail 位置保存在 `fluent_bit_state` volume 中，且
+`Read_From_Head=False`，部署时不会自动重放旧日志。检查本地格式使用
+`scripts/validate_amp_logs.py`；在服务器上抽样确认 Kafka 入库可使用
+`scripts/check_kafka_forwarding.sh`。官方在线状态用 Discovery 的 `aliveMap` 验证，
+不要求参赛者取得 Monitor 管理员 OIDC 权限。
+
+截至 2026-09-28，官方文字答复将该端点称为 Kafka/TLS，但端口实测拒绝 TLS 握手、
+接受明文 Kafka，官方 AMP 示例也没有 TLS 参数。当前配置按实际监听器使用明文 Kafka；
+在主办方明确 TLS 端口或证书/SASL 参数后，应立即补上加密配置。在此之前不要通过 AMP
+发送论文原文、未公开数据或其他敏感载荷。
+
 ### 回滚
 
 如果阶段 B 无法启动，先保存日志，再退回阶段 A：
@@ -182,18 +205,15 @@ docker compose --env-file deploy/.env.server -f deploy/compose.review.yml up -d
 
 ## 正式部署仍需外部信息
 
-- 主办方/Registry 分配的四个 AIC；
-- EAB 与每个智能体对应的 clientAuth/serverAuth 证书；
-- 可从梧桐访问的公网 HTTPS 域名；
 - 主办方对“先提交带什么 endpoint 的 ACS，后取得证书”的准确要求；
-- AMP Kafka/TLS 凭据及比赛环境的日志上报要求。
+- AMP Kafka/TLS 的实际加密端口或证书/SASL 参数。
 
 ### AMP Agent 端接入
 
-`compose.mtls.yml` 为四个 AIP 服务启用标准 heartbeat 与 audit Emitter。日志以绑定目录
+`compose.mtls.yml` 为四个 AIP 服务启用标准 heartbeat、access 与 audit Emitter。日志
 写入 `${AMP_LOG_ROOT:-./amp-logs}`，audit 使用各智能体的平台证书私钥签名。部署后可用
-`scripts/validate_amp_logs.py` 检查连续心跳、AIC 一致性和签名完整性。该检查只证明
-Agent 端日志头；平台 Monitor 入库仍取决于主办方部署并配置的 Forwarder。
+`scripts/validate_amp_logs.py` 检查连续心跳、AIC 一致性、access 双端配对和签名完整性；
+同一 compose 中的 Fluent Bit 会继续把新记录转发到官方 Kafka 主题。
 
 不要把 `.env`、私钥、证书或 EAB 文件提交到仓库。根目录 `.gitignore` 已覆盖这些
 常见敏感文件，但部署时仍应使用宿主机密钥目录或 secret 管理器。

@@ -29,6 +29,17 @@ class AmpObservabilityTests(unittest.IsolatedAsyncioTestCase):
                 success=True,
                 reason="structured-product-ready",
             )
+            await amp.emit_access(
+                caller_aic="1.2.156.test.caller",
+                caller_service="leader",
+                callee_aic="1.2.156.test.agent",
+                callee_service="test-agent",
+                task_id="task-1",
+                session_id="session-1",
+                url="https://agent.test/rpc",
+                duration_ms=12.5,
+                status_code=200,
+            )
             await amp.stop()
 
             heartbeat = json.loads(
@@ -41,6 +52,11 @@ class AmpObservabilityTests(unittest.IsolatedAsyncioTestCase):
                 .read_text(encoding="utf-8")
                 .splitlines()[-1]
             )
+            access = json.loads(
+                (Path(temp_dir) / "amp_access_test-agent.jsonl")
+                .read_text(encoding="utf-8")
+                .splitlines()[-1]
+            )
 
         self.assertEqual(heartbeat["log_type"], "heartbeat")
         self.assertEqual(heartbeat["aic"], "1.2.156.test.agent")
@@ -48,6 +64,10 @@ class AmpObservabilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(audit["aic"], "1.2.156.test.agent")
         self.assertEqual(audit["correlation_id"], "task-1")
         self.assertEqual(audit["body"]["result"]["status"], "success")
+        self.assertEqual(access["log_type"], "access")
+        self.assertEqual(access["correlation_id"], "task-1")
+        self.assertEqual(access["body"]["caller"]["serviceName"], "leader")
+        self.assertEqual(access["body"]["callee"]["serviceName"], "test-agent")
 
 
 if __name__ == "__main__":
