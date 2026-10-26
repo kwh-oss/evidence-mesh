@@ -6,11 +6,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-ARG ACPS_COMMUNITY_TAG=v2.2.0
-RUN python -m pip install --no-cache-dir \
-    "https://github.com/AIP-PUB/ACPs-community/archive/refs/tags/${ACPS_COMMUNITY_TAG}.zip#subdirectory=acps-sdk" \
-    cryptography \
-    jcs
+COPY requirements.txt /app/requirements.txt
+RUN python -m pip install --no-cache-dir -r /app/requirements.txt
 
 COPY src /app/src
 

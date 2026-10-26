@@ -6,7 +6,7 @@ import argparse
 import ssl
 from pathlib import Path
 from urllib.error import URLError
-from urllib.request import urlopen
+from urllib.request import HTTPSHandler, ProxyHandler, build_opener
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,6 +18,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--secret-root", type=Path, default=DEFAULT_SECRET_ROOT)
     parser.add_argument("--host", default=DEFAULT_HOST)
+    parser.add_argument("--ports", type=int, nargs="+", default=[8440, 8441, 8442, 8443])
     return parser.parse_args()
 
 
@@ -36,22 +37,25 @@ def main() -> None:
         cafile=str(secret_root / "trust-bundle.pem")
     )
     unauthenticated.minimum_version = ssl.TLSVersion.TLSv1_3
+    authenticated_open = build_opener(ProxyHandler({}), HTTPSHandler(context=authenticated)).open
+    unauthenticated_open = build_opener(ProxyHandler({}), HTTPSHandler(context=unauthenticated)).open
+    public_open = build_opener(ProxyHandler({})).open
 
-    for port in (8440, 8441, 8442, 8443):
+    for port in args.ports:
         url = f"https://{args.host}:{port}/health"
-        with urlopen(url, context=authenticated, timeout=15) as response:
+        with authenticated_open(url, timeout=15) as response:
             if response.status != 200:
                 raise RuntimeError(f"unexpected status on {port}: {response.status}")
         print(f"PUBLIC_MTLS_OK_{port}")
 
         try:
-            urlopen(url, context=unauthenticated, timeout=8)
+            unauthenticated_open(url, timeout=8)
         except (ssl.SSLError, URLError, ConnectionError):
             print(f"PUBLIC_NO_CERT_REJECTED_{port}")
         else:
             raise RuntimeError(f"unauthenticated access succeeded on {port}")
 
-    with urlopen(f"https://{args.host}/health", timeout=15) as response:
+    with public_open(f"https://{args.host}/health", timeout=15) as response:
         if response.status != 200:
             raise RuntimeError(f"unexpected public HTTPS status: {response.status}")
     print("PUBLIC_443_OK")

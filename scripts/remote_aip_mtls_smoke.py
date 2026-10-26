@@ -23,6 +23,12 @@ async def main() -> None:
         "true",
         "yes",
     }
+    plain_text_input = os.getenv("PLAIN_TEXT_INPUT", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    caller_text = os.getenv("CALLER_TEXT", "").strip()
     payload = {
         "schema_version": "1.0",
         "claim_text": "处理组观察到信号升高",
@@ -49,9 +55,14 @@ async def main() -> None:
         identity_binding_enabled=True,
     )
     try:
+        request_text = (
+            caller_text or "处理组观察到信号升高"
+            if plain_text_input
+            else json.dumps(payload, ensure_ascii=False)
+        )
         started = await client.start_task(
             session_id,
-            json.dumps(payload, ensure_ascii=False),
+            request_text,
             task_id=task_id,
         )
         if started.status.state != TaskState.AwaitingCompletion:
@@ -74,7 +85,7 @@ async def main() -> None:
             raise RuntimeError("Evidence Passport does not contain three Partner tasks")
         if not isinstance(partner_products, dict) or len(partner_products) != 3:
             raise RuntimeError("Evidence Passport does not contain three Partner products")
-        if minimal_input:
+        if minimal_input or plain_text_input:
             if product.get("claim_id") != task_id:
                 raise RuntimeError("minimal input did not inherit the AIP task ID")
             source_product = partner_products.get("source-verifier", {})
@@ -84,6 +95,11 @@ async def main() -> None:
                 raise RuntimeError("missing source metadata was not marked incomplete")
             if not any("source" in str(issue).lower() for issue in issues):
                 raise RuntimeError("missing source metadata was not recorded as an issue")
+            if caller_text and any(
+                "source excerpt is missing" in str(issue).lower()
+                for issue in issues
+            ):
+                raise RuntimeError("labeled caller text did not preserve its evidence excerpt")
         print(
             json.dumps(
                 {
@@ -93,7 +109,11 @@ async def main() -> None:
                     "decision": product.get("decision"),
                     "partner_task_count": len(task_ids),
                     "partner_product_count": len(partner_products),
-                    "input_mode": "minimal" if minimal_input else "complete",
+                    "input_mode": (
+                        "plain-text"
+                        if plain_text_input
+                        else ("minimal" if minimal_input else "complete")
+                    ),
                     "claim_id": product.get("claim_id"),
                 },
                 ensure_ascii=False,

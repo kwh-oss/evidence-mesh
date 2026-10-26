@@ -18,15 +18,25 @@ from acps_sdk.aip.aip_rpc_server import (
 )
 
 from .amp_observability import install_amp_observability, monotonic_ms
-from .contracts import request_from_json, request_json
+from .contracts import request_from_caller_text, request_from_json, request_json
 from .leader import PartnerTarget, audit_claim
+from .human_result import human_summary
 from .runtime_config import build_client_ssl_context, leader_identity, required_env
+from .deepseek_review import configured_semantic_reviewer
+from .external_collaboration import configured_external_collaborator
+from .product_presentation import readable_product_item
+from .result_presentation import present_passport
 
 
 app = FastAPI(title="Evidence Mesh Leader", version="0.1.0")
 app.add_middleware(AipPeerCertificateMiddleware)
 STATIC_DIR = Path(__file__).with_name("static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+def caller_summary(passport):
+    """One readable answer, not answer plus its duplicate summary."""
+    return passport.get('answer') or passport.get('human_summary') or human_summary(passport)
 
 
 def configured_targets() -> list[PartnerTarget]:
@@ -85,7 +95,9 @@ async def audit(payload: dict) -> dict:
     except (ValueError, json.JSONDecodeError) as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
 
-    return await audit_claim(request_text, configured_targets())
+    return present_passport(await audit_claim(request_text, configured_targets(),
+                             semantic_reviewer=configured_semantic_reviewer(),
+                             external_collaborator=configured_external_collaborator(_amp)))
 
 
 async def aip_on_start(command, task: TaskResult | None) -> TaskResult:
@@ -104,12 +116,36 @@ async def aip_on_start(command, task: TaskResult | None) -> TaskResult:
             for item in command.dataItems or []
             if isinstance(item, TextDataItem) and item.text.strip()
         )
-        request = request_from_json(
-            request_text, default_claim_id=current.taskId
-        )
-        passport = await audit_claim(
-            request_json(request), configured_targets(), _amp
-        )
+        try:
+            envelope = json.loads(request_text)
+        except ValueError:
+            envelope = None
+        if isinstance(envelope, dict) and envelope.get('task_type') == 'observe_video':
+            from .video_observation import observe_video
+            passport = await observe_video(envelope.get('capture'), configured_semantic_reviewer(),speech=envelope.get('speech'))
+        else:
+            from .collaboration_input import command_text, normalize_handoff, retrieval_request
+            from .leader_input import leader_command_text
+            request_text = leader_command_text(command, default_claim_id=current.taskId)
+            try:
+                value = json.loads(request_text)
+                if isinstance(value, dict):
+                    request_text = json.dumps(normalize_handoff(value), ensure_ascii=False)
+            except ValueError:
+                pass
+            request = request_from_caller_text(request_text, default_claim_id=current.taskId)
+            if request.task_type != 'supplied_material_only':
+                request, upstream_handoff = retrieval_request(request)
+            else:
+                upstream_handoff = None
+            passport = await audit_claim(
+                request_json(request), configured_targets(), _amp,
+                semantic_reviewer=configured_semantic_reviewer(),
+                external_collaborator=configured_external_collaborator(_amp),
+                collaboration_root=current.taskId,
+            )
+            if upstream_handoff:
+                passport['upstream_handoff'] = upstream_handoff
     except (StopIteration, ValueError, json.JSONDecodeError) as error:
         if _amp is not None:
             await _amp.emit_access(
@@ -157,18 +193,16 @@ async def aip_on_start(command, task: TaskResult | None) -> TaskResult:
             )
         raise
 
+    from .leader_delivery import with_external_supplements
+    passport = with_external_supplements(present_passport(passport))
     TaskManager.set_products(
         current.taskId,
         [
             Product(
                 id=f"evidence-audit-leader-{current.taskId}",
-                name="evidence-passport",
-                description="Aggregated Evidence Passport from the Leader",
-                dataItems=[
-                    TextDataItem(
-                        text=json.dumps(passport, ensure_ascii=False, sort_keys=True)
-                    )
-                ],
+                name=passport.get('product_type', 'evidence-passport'),
+                description="Video sample observation" if passport.get('product_type') == 'video-observation' else "Aggregated Evidence Passport from the Leader",
+                dataItems=[readable_product_item(passport)],
             )
         ],
     )
@@ -189,13 +223,19 @@ async def aip_on_start(command, task: TaskResult | None) -> TaskResult:
             task_id=current.taskId,
             session_id=getattr(command, "sessionId", None),
             success=True,
-            reason="evidence-passport-ready",
+            reason="video-observation-ready" if passport.get('product_type') == 'video-observation' else "evidence-passport-ready",
         )
+    from .external_consultation import pending_external_children
     return TaskManager.update_task_status(
         current.taskId,
-        TaskState.AwaitingCompletion,
-        [TextDataItem(text="Evidence Passport ready for caller confirmation.")],
+        TaskState.Working if pending_external_children(passport) else TaskState.AwaitingCompletion,
+        [TextDataItem(text=passport.get('answer') or passport.get('human_summary') or human_summary(passport))],
     )
+
+
+async def aip_on_get(command, task):
+    from .leader_pending_external import get_with_external_recovery
+    return await get_with_external_recovery(command,task,configured_external_collaborator(_amp))
 
 
 _leader_aic, _leader_identity_binding_enabled = leader_identity()
@@ -204,7 +244,7 @@ _amp = install_amp_observability(
 )
 _aip_handlers = CommandHandlers(
     on_start=aip_on_start,
-    on_get=DefaultHandlers.get,
+    on_get=aip_on_get,
     on_cancel=DefaultHandlers.cancel,
     on_complete=DefaultHandlers.complete,
     on_continue=DefaultHandlers.continue_,
@@ -216,3 +256,6 @@ add_aip_rpc_router(
     local_aic=_leader_aic,
     identity_binding_enabled=_leader_identity_binding_enabled,
 )
+
+from .leader_pending_external import restore_pending_snapshots
+restore_pending_snapshots(_leader_aic)

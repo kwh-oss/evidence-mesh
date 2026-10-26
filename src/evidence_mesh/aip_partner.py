@@ -16,16 +16,19 @@ from acps_sdk.aip.aip_rpc_server import (
 from acps_sdk.aip.aip_peer_cert import AipPeerCertificateMiddleware
 
 from .amp_observability import install_amp_observability, monotonic_ms
-from .contracts import product_json, request_from_json
+from .partner_input import partner_product, partner_request
 from .group_partner import install_group_partner_endpoint
 from .runtime_config import partner_identity
+from .retrieval_archive import AIP_TASK_ID, AIP_TASK_TRANSPORT
+from .product_presentation import readable_product_item
 
 
 Processor = Callable[[Any], Any]
 
 
 def build_partner_app(
-    *, service_name: str, product_type: str, processor: Processor
+    *, service_name: str, product_type: str, processor: Processor,
+    product_builder=None,
 ) -> FastAPI:
     app = FastAPI(title=service_name, version="0.1.0")
     local_aic, identity_binding_enabled = partner_identity(service_name)
@@ -46,17 +49,20 @@ def build_partner_app(
         current.senderId = local_aic
 
         try:
-            request_text = next(
-                item.text
-                for item in command.dataItems or []
-                if isinstance(item, TextDataItem) and item.text.strip()
-            )
-            request = request_from_json(
+            from .collaboration_input import command_text
+            request_text = command_text(command)
+            request = partner_request(
                 request_text, default_claim_id=current.taskId
             )
-            payload = processor(request)
-            output = product_json(product_type, payload)
-        except (StopIteration, ValueError, json.JSONDecodeError) as error:
+            archive_task_token = AIP_TASK_ID.set(current.taskId)
+            archive_transport_token = AIP_TASK_TRANSPORT.set('aip-rpc')
+            try:
+                output = (await product_builder(request) if product_builder is not None
+                          else partner_product(product_type, processor, request))
+            finally:
+                AIP_TASK_TRANSPORT.reset(archive_transport_token)
+                AIP_TASK_ID.reset(archive_task_token)
+        except (StopIteration, ValueError, json.JSONDecodeError):
             if amp is not None:
                 await amp.emit_access(
                     caller_aic=getattr(command, "senderId", None),
@@ -79,7 +85,7 @@ def build_partner_app(
             return TaskManager.update_task_status(
                 current.taskId,
                 TaskState.Failed,
-                [TextDataItem(text=f"invalid-request: {error}")],
+                [TextDataItem(text="invalid-request: request validation failed; internal details withheld")],
             )
         except Exception:
             if amp is not None:
@@ -101,7 +107,11 @@ def build_partner_app(
                     success=False,
                     reason="processing-error",
                 )
-            raise
+            return TaskManager.update_task_status(
+                current.taskId,
+                TaskState.Failed,
+                [TextDataItem(text="processing-error: task could not be completed; internal details withheld")],
+            )
 
         TaskManager.set_products(
             current.taskId,
@@ -109,8 +119,8 @@ def build_partner_app(
                 Product(
                     id=f"{service_name}-{current.taskId}",
                     name=product_type,
-                    description=f"Structured {product_type} product",
-                    dataItems=[TextDataItem(text=output)],
+                    description="结论与依据；机器可读结果保留在数据项元数据中",
+                    dataItems=[readable_product_item(output)],
                 )
             ],
         )
@@ -136,7 +146,7 @@ def build_partner_app(
         return TaskManager.update_task_status(
             current.taskId,
             TaskState.AwaitingCompletion,
-            [TextDataItem(text="Structured product ready for Leader confirmation.")],
+            [TextDataItem(text=json.loads(output)['answer'])],
         )
 
     handlers = CommandHandlers(
@@ -161,6 +171,7 @@ def build_partner_app(
         product_type=product_type,
         processor=processor,
         amp=amp,
+        product_builder=product_builder,
     )
 
     @app.get("/health")

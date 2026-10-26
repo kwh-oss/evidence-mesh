@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "证链 · 随手核验",
+  "version": "0.3.3",
+  "description": "先观察当前视频的采样画面，再检索证据核验具体说法。",
+  "minimum_chrome_version": "116",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "sidePanel",
+    "storage",
+    "contextMenus"
+    ,"tabCapture"
+    ,"offscreen"
+  ],
+  "host_permissions": [
+    "https://api.linsixuan.cn/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "用证链核验当前消息",
+    "default_icon": {
+      "16": "icons/16.png",
+      "32": "icons/32.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "panel.html"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; connect-src https://api.linsixuan.cn data:"
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5kpkfWvhPAAvzRJhn2sai+PTXhCYiHflA7jvCXCV79hJ/vVN9RC4b+YMxpV1+HGQ4vuFBBC7aLyCyXKhfTxa+eNCVAPc3CBJyZVIlPi5z1frmEbD7H1whPNxWLXF3FdsRRsmSGzShTb5/vB1875XmZjdS/0UaZg8lQNYONcKlWyKUvdex2FrEvC1ym40WK+TOHlfJmcKOc57sE4gq3Mk5i6fdtmLhD2gyHkZIQK7S0CHatJp0hn7ycxgpzJUx7KQco/PrtGSqRv7iORVTlWXz/NUyDkzwUzdRTH00fj9uGT1EBKlJKpARqX5cq4p3zuBeM6bZme4WbbasTaoJ2Mh1QIDAQAB",
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  }
+}

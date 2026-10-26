@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+import subprocess
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -12,6 +13,9 @@ TEXT_SUFFIXES = {
     ".css",
     ".html",
     ".js",
+    ".mjs",
+    ".svg",
+    ".drawio",
     ".json",
     ".jsonl",
     ".md",
@@ -54,9 +58,18 @@ TEMPORARY_DNS_SUFFIX = "sslip" + ".io"
 
 
 def text_files() -> list[Path]:
+    # A developer checkout can contain private operational records that must
+    # not become public. Check the actual tracked/index file set. A clean
+    # exported directory without .git is checked in full before staging.
+    if (ROOT / '.git').exists():
+        result = subprocess.run(['git', '-C', str(ROOT), 'ls-files', '-z'],
+                                capture_output=True, check=True)
+        candidates = [ROOT / name for name in result.stdout.decode('utf-8').split('\0') if name]
+    else:
+        candidates = ROOT.rglob('*')
     return [
         path
-        for path in ROOT.rglob("*")
+        for path in candidates
         if path.is_file()
         and path.suffix.lower() in TEXT_SUFFIXES
         and not any(part in SKIP_DIRS for part in path.relative_to(ROOT).parts)

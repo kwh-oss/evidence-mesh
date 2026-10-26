@@ -1,0 +1,12 @@
+{
+  "post": "这120名受访者中，60%支持试行新方案。这项调查不能证明全市居民都支持新方案。我觉得这项政策值得尝试。",
+  "material": "某社区对自愿参与调查的120名受访者进行了问卷调查，其中72人支持试行新的垃圾分类方案。调查没有覆盖全市居民，也没有证明样本具有全市代表性。",
+  "model_result": {
+    "schema_version": "1.2",
+    "claims": [
+      {"claim_span": "这120名受访者中，60%支持试行新方案。", "kind": "fact", "status": "supported", "contradiction_basis": "none", "mechanisms": ["number"], "quotes": [{"text": "某社区对自愿参与调查的120名受访者进行了问卷调查，其中72人支持试行新的垃圾分类方案。"}], "explanation": "材料给出120名受访者中72人支持，72/120=60%，与帖子数字一致；这里指的是该次调查样本内的比例。", "suggested_wording": null},
+      {"claim_span": "这项调查不能证明全市居民都支持新方案。", "kind": "fact", "status": "supported", "contradiction_basis": "none", "mechanisms": ["scope"], "quotes": [{"text": "调查没有覆盖全市居民，也没有证明样本具有全市代表性。"}], "explanation": "材料明确说明调查未覆盖全市居民、也未证明样本具有全市代表性，因此不能据此推出全市居民都支持新方案。", "suggested_wording": null},
+      {"claim_span": "我觉得这项政策值得尝试。", "kind": "opinion", "status": "opinion", "contradiction_basis": "none", "mechanisms": [], "quotes": [], "explanation": "这是发帖者个人的价值判断，材料未提供可核验其正确与否的标准。", "suggested_wording": null}
+    ]
+  }
+}

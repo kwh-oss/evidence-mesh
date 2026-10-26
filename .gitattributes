@@ -1,0 +1,2 @@
+# Preserve the captured public HTML fixture byte-for-byte, including whitespace.
+tests/fixtures/12306-announcement-20241211-captured-20261012.html -text -whitespace

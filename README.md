@@ -1,4 +1,53 @@
-# 智能体互联比赛项目
+# 证链 · Evidence Mesh
+
+通过网页、浏览器侧栏或AIP互联平台，对自然问题和视频片段中的事实主张进行检索、材料比较与有据回答。
+
+![系统架构](docs/figures/system-architecture.svg)
+
+## 当前工程
+
+四个独立AIP服务：总控组织任务并整合答案；资料检索伙伴获取正文与出处线索；材料支持度伙伴提供规则初筛；语义冲突伙伴在配置模型时比较意义与条件。伙伴可分别被梧桐/叮当调用。叮当分配与总控自身派单分别记录。
+
+插件当前源码版本0.3.3，用户主动采集播放位置附近约30秒声音和最多6帧画面，提取事实主张后检索外部材料，不声称理解整个视频或鉴定真伪。
+
+## 快速运行
+
+Python 3.13，无密钥模式不调用付费搜索、模型或外部智能体：
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe scripts/local_demo.py
+```
+
+Linux/macOS替换为`.venv/bin/python`。打开`http://127.0.0.1:8010/`，Ctrl+C停止全部子服务。自动闭环检查使用`python scripts/local_demo.py --smoke`。本地演示验证四服务AIP材料交接，完整联网产品需按[部署说明](docs/deployment.md)配置。
+
+## 验证
+
+```powershell
+$env:PYTHONPATH = "src"
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+node --test browser-extension/model.test.mjs
+.\.venv\Scripts\python.exe scripts/check_public_repo.py
+```
+
+公开测试使用离线材料、模拟传输和合成凭据，不代表事实准确率。私有历史结果回放与身份迁移夹具不进入公开更新。CI从全新检出运行公开测试与本地闭环。
+
+## 工程入口
+
+- [系统设计与自主实现](docs/architecture.md)
+- [运行、生产配置与插件安装](docs/deployment.md)
+- [本次工程更新与验证范围](docs/engineering-release.md)
+- [AIP社区分享稿与贡献路线](docs/community-sharing.md)
+- [浏览器扩展](browser-extension/README.md)
+- [任务编排](src/evidence_mesh/leader.py)、[语义与引文](src/evidence_mesh/semantic_review.py)、[内外协作](src/evidence_mesh/hybrid_collaboration.py)
+
+复用[AIP-PUB/ACPs-community](https://github.com/AIP-PUB/ACPs-community)的SDK，开发环境2.2.0；团队实现边界见[NOTICE](NOTICE)，自研代码与文档采用[Apache-2.0](LICENSE)。真实密钥、身份私钥、插件访问文件、原始音视频、私有配置及运行日志留在部署者私有环境。
+
+<details>
+<summary>历史开发记录（以下旧日期、版本与审核状态不代表当前部署）</summary>
+
+## 初始项目记录
 
 本仓库用于第八届全球校园人工智能算法精英大赛“智能体互联”赛题的开发、验证与材料留存。
 
@@ -76,4 +125,6 @@ $env:PYTHONPATH = "src"
 
 本项目原创代码与文档采用 [Apache License 2.0](LICENSE)。第三方组件的归属和版本
 边界见 [NOTICE](NOTICE)；项目许可证不会替代第三方组件自身的许可条款。
+
+</details>
 

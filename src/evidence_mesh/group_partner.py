@@ -24,8 +24,10 @@ from acps_sdk.aip.aip_group_model import (
 from acps_sdk.aip.aip_peer_cert import get_request_peer_aic
 
 from .amp_observability import AmpObservability
-from .contracts import product_json, request_from_json
+from .partner_input import partner_product, partner_request
 from .runtime_config import build_group_ssl_context, env_flag
+from .retrieval_archive import AIP_TASK_ID, AIP_TASK_TRANSPORT
+from .product_presentation import readable_product_item
 
 
 Processor = Callable[[Any], Any]
@@ -40,6 +42,7 @@ async def process_group_command(
     product_type: str,
     processor: Processor,
     amp: AmpObservability | None = None,
+    product_builder=None,
 ) -> None:
     """Run the existing deterministic processor for one mentioned Group task."""
 
@@ -56,16 +59,22 @@ async def process_group_command(
             for item in command.dataItems or []
             if isinstance(item, TextDataItem) and item.text.strip()
         )
-        request = request_from_json(
+        request = partner_request(
             request_text, default_claim_id=command.taskId
         )
-        payload = processor(request)
-        output = product_json(product_type, payload)
+        group_task_token = AIP_TASK_ID.set(command.taskId)
+        group_transport_token = AIP_TASK_TRANSPORT.set('aip-group')
+        try:
+            output = (await product_builder(request) if product_builder is not None
+                      else partner_product(product_type, processor, request))
+        finally:
+            AIP_TASK_TRANSPORT.reset(group_transport_token)
+            AIP_TASK_ID.reset(group_task_token)
         product = Product(
             id=f"{service_name}-{command.taskId}",
             name=product_type,
-            description=f"Structured {product_type} Group product",
-            dataItems=[TextDataItem(text=output)],
+            description="结论与依据；机器可读结果保留在数据项元数据中",
+            dataItems=[readable_product_item(output)],
         )
         await client.submit_for_completion(
             command.taskId, command.sessionId, [product]
@@ -78,9 +87,10 @@ async def process_group_command(
                 success=True,
                 reason="group-product-ready",
             )
-    except (StopIteration, ValueError, json.JSONDecodeError) as error:
+    except (StopIteration, ValueError, json.JSONDecodeError):
         await client.fail_task(
-            command.taskId, command.sessionId, f"invalid-request: {error}"
+            command.taskId, command.sessionId,
+            "invalid-request: request validation failed; internal details withheld",
         )
         if amp is not None:
             await amp.emit_task_result(
@@ -90,9 +100,10 @@ async def process_group_command(
                 success=False,
                 reason="group-invalid-request",
             )
-    except Exception as error:
+    except Exception:
         await client.fail_task(
-            command.taskId, command.sessionId, f"processing-error: {error}"
+            command.taskId, command.sessionId,
+            "processing-error: task could not be completed; internal details withheld",
         )
         if amp is not None:
             await amp.emit_task_result(
@@ -113,6 +124,7 @@ def install_group_partner_endpoint(
     product_type: str,
     processor: Processor,
     amp: AmpObservability | None,
+    product_builder=None,
 ) -> bool:
     """Install `/group/rpc` only when strict Group credentials are configured."""
 
@@ -162,6 +174,7 @@ def install_group_partner_endpoint(
                 product_type=product_type,
                 processor=processor,
                 amp=amp,
+                product_builder=product_builder,
             )
 
         client.set_command_handler(on_command)

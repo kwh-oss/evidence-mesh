@@ -8,6 +8,7 @@ from acps_sdk.aip import TaskState, TextDataItem
 from acps_sdk.aip.aip_rpc_client import AipRpcClient
 
 from evidence_mesh.leader_app import app
+from evidence_mesh.product_presentation import read_product
 
 
 class LeaderAppTests(unittest.IsolatedAsyncioTestCase):
@@ -102,11 +103,77 @@ class LeaderAppTests(unittest.IsolatedAsyncioTestCase):
                 for item in product.dataItems
                 if isinstance(item, TextDataItem)
             )
-            product = json.loads(product_text)
+            self.assertFalse(product_text.startswith('{'))
+            self.assertEqual(len(completed.products), 1)
+            product = read_product(completed.products)
             self.assertEqual(product["product_type"], "evidence-passport")
             self.assertEqual(product["claim_id"], "claim-aip-leader")
         finally:
             await client.close()
+
+    @patch("evidence_mesh.leader_app.audit_claim", new_callable=AsyncMock)
+    async def test_leader_accepts_plain_text_without_clarification(self, mocked_audit) -> None:
+        mocked_audit.return_value = {
+            "schema_version": "1.0",
+            "product_type": "evidence-passport",
+            "claim_id": "task-plain",
+            "decision": "needs-review",
+        }
+        client = AipRpcClient(
+            "http://leader.test/rpc",
+            "test-upstream-leader",
+            transport=httpx.ASGITransport(app=app),
+            identity_binding_enabled=False,
+        )
+        try:
+            started = await client.start_task(
+                "session-plain", "处理导致细胞死亡", task_id="task-plain"
+            )
+            self.assertEqual(started.status.state, TaskState.AwaitingCompletion)
+            canonical_request = json.loads(mocked_audit.await_args.args[0])
+            self.assertEqual(canonical_request["claim_text"], "处理导致细胞死亡")
+            self.assertIn("未提供证据摘录", canonical_request["source_excerpt"])
+        finally:
+            await client.close()
+
+
+    async def test_pending_child_keeps_root_working_and_get_refreshes_without_new_start(self):
+        root='pending-root-'+str(uuid.uuid4());session='session-'+root
+        pending={'schema_version':'1.0','product_type':'evidence-passport','claim_id':root,
+            'checked_claim':'查询民法典第五百零九条原文。','decision_scope':'external-consultation',
+            'consultation_status':'pending','answer':'原任务尚在运行',
+            'external_collaboration':{'reviews':[{'partner_aic':'p','task_id':'child','aip_state':'working','invoked':True}]}}
+        done={**pending,'consultation_status':'completed','answer':'原任务最终条文',
+            'resumed_external_children':True,'external_collaboration':{'reviews':[{'partner_aic':'p','task_id':'child','aip_state':'completed','invoked':True}]}}
+        client=AipRpcClient('http://leader.test/rpc','test-owner',transport=httpx.ASGITransport(app=app),identity_binding_enabled=False)
+        try:
+            with patch('evidence_mesh.leader_app.audit_claim',new=AsyncMock(return_value=pending)) as start, patch(
+                    'evidence_mesh.leader_app.configured_external_collaborator',return_value=None), patch(
+                    'evidence_mesh.leader_pending_external.refresh_pending_consultation',new=AsyncMock(return_value=done)) as resume:
+                first=await client.start_task(session,pending['checked_claim'],task_id=root)
+                self.assertEqual(first.status.state,TaskState.Working)
+                # A deployment may restore only authenticated pending snapshots.
+                import tempfile
+                from pathlib import Path
+                from acps_sdk.aip.aip_rpc_server import TaskManager
+                from evidence_mesh.leader_pending_external import restore_pending_snapshots
+                with tempfile.TemporaryDirectory() as folder:
+                    snapshot=Path(folder)/'pending.json'
+                    snapshot.write_text(json.dumps([first.model_dump(mode='json')]))
+                    TaskManager._tasks.pop(root)
+                    self.assertEqual(restore_pending_snapshots(first.senderId,snapshot),1)
+                    self.assertEqual(restore_pending_snapshots(first.senderId,snapshot),0)
+                    with self.assertRaises(ValueError):restore_pending_snapshots('wrong-leader',snapshot)
+                premature=await client.complete_task(root,session)
+                self.assertEqual(premature.status.state,TaskState.Working)
+                refreshed=await client.get_task(root,session)
+                self.assertEqual(refreshed.status.state,TaskState.AwaitingCompletion)
+                self.assertEqual(read_product(refreshed.products)['answer'],'原任务最终条文')
+                final=await client.complete_task(root,session)
+                self.assertEqual(final.status.state,TaskState.Completed)
+                await client.get_task(root,session)
+                start.assert_awaited_once();resume.assert_awaited_once()
+        finally:await client.close()
 
 
 if __name__ == "__main__":

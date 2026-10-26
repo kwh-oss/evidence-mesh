@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="640" viewBox="0 0 1800 640" role="img">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#253447"/></marker></defs>
+<style>text{font-family:'Microsoft YaHei','Noto Sans CJK SC',sans-serif}</style><rect width="100%" height="100%" fill="white"/><g transform="translate(0 0)">
+<polyline points="580,235 680,235" fill="none" stroke="#253447" stroke-width="1.8" marker-end="url(#arrow)"/>
+<polyline points="1040,235 1140,235" fill="none" stroke="#253447" stroke-width="1.8" marker-end="url(#arrow)"/>
+<polyline points="580,410 680,410" fill="none" stroke="#253447" stroke-width="1.8" marker-end="url(#arrow)"/>
+<polyline points="1040,410 1140,410" fill="none" stroke="#253447" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="47" y="58.7" font-size="32" font-weight="600" text-anchor="start" fill="#253447">真实迭代：从引用格式失败到可交付回答</text>
+<text x="47" y="120.9" font-size="24" font-weight="400" text-anchor="start" fill="#253447">同一问题：Transformer 最早出自哪篇论文？    /    2026.10.24 两次真实网页任务</text>
+<text x="47" y="249.45" font-size="27" font-weight="600" text-anchor="start" fill="#95634c">修复前</text>
+<text x="47" y="424.45" font-size="27" font-weight="600" text-anchor="start" fill="#46765c">修复后</text>
+<rect x="220" y="185" width="360" height="100" fill="#fbf5e9" stroke="#bba675" stroke-width="1.5"/>
+<text x="400.0" y="226.0" font-size="24" font-weight="400" text-anchor="middle" fill="#253447">模型生成引用</text>
+<text x="400.0" y="260.8" font-size="24" font-weight="400" text-anchor="middle" fill="#253447">混用新旧引用字段</text>
+<rect x="680" y="185" width="360" height="100" fill="#faf0eb" stroke="#bd9b88" stroke-width="1.5"/>
+<text x="860.0" y="226.0" font-size="24" font-weight="400" text-anchor="middle" fill="#253447">引用结构校验失败</text>
+<text x="860.0" y="260.8" font-size="24" font-weight="400" text-anchor="middle" fill="#253447">分析未形成有效结果</text>
+<rect x="1140" y="185" width="595" height="100" fill="white" stroke="#bd9b88" stroke-width="1.5"/>
+<text x="1437.5" y="226.0" font-size="24" font-weight="400" text-anchor="middle" fill="#253447">网页返回</text>
+<text x="1437.5" y="260.8" font-size="24" font-weight="400" text-anchor="middle" fill="#253447">“本次未得出核验结论。”</text>
+<rect x="220" y="360" width="360" height="100" fill="#eaf1f9" stroke="#7894b4" stroke-width="1.5"/>
+<text x="400.0" y="401.0" font-size="24" font-weight="400" text-anchor="middle" fill="#253447">服务端提供引文候选</text>
+<text x="400.0" y="435.8" font-size="24" font-weight="400" text-anchor="middle" fill="#253447">模型选择候选编号</text>
+<rect x="680" y="360" width="360" height="100" fill="#eaf1f9" stroke="#7894b4" stroke-width="1.5"/>
+<text x="860.0" y="401.0" font-size="24" font-weight="400" text-anchor="middle" fill="#253447">严格校验与无损规范化</text>
+<text x="860.0" y="435.8" font-size="24" font-weight="400" text-anchor="middle" fill="#253447">来源、原文与位置仍受约束</text>
+<rect x="1140" y="360" width="595" height="100" fill="#eaf3ee" stroke="#7eaa90" stroke-width="1.5"/>
+<text x="1437.5" y="401.0" font-size="24" font-weight="400" text-anchor="middle" fill="#253447">网页给出结论并附材料引用</text>
+<text x="1437.5" y="435.8" font-size="24" font-weight="400" text-anchor="middle" fill="#253447">2017 年《Attention Is All You Need》</text>
+<text x="222" y="332.35" font-size="21" font-weight="400" text-anchor="start" fill="#637185">修复点：仅接纳与候选完全一致的冗余字段；不一致仍拒绝，并允许一次有界重分析。</text>
+<text x="47" y="542.125" font-size="21" font-weight="400" text-anchor="start" fill="#637185">两次 AIP 根任务均为 completed；差异在语义分析与答案交付。修复后本例完成三个内部伙伴子任务。</text>
+<text x="47" y="572.575" font-size="21" font-weight="400" text-anchor="start" fill="#637185">结论来自本次取得的两份可读正文；原论文页未直接读取。任务编号及原始文件哈希见 evidence-summary.json。</text>
+</g></svg>

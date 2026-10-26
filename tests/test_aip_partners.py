@@ -7,7 +7,11 @@ import httpx
 from acps_sdk.aip import TaskState, TextDataItem
 from acps_sdk.aip.aip_rpc_client import AipRpcClient
 
+from evidence_mesh.product_presentation import read_product
 from evidence_mesh.contracts import SCHEMA_VERSION
+from evidence_mesh.aip_partner import build_partner_app
+from evidence_mesh.processors import verify_source
+from evidence_mesh.retrieval_archive import AIP_TASK_ID, AIP_TASK_TRANSPORT
 from evidence_mesh.contradiction_partner import app as contradiction_app
 from evidence_mesh.grader_partner import app as grader_app
 from evidence_mesh.source_partner import app as source_app
@@ -32,6 +36,31 @@ def valid_request() -> str:
 
 
 class AipPartnerTests(unittest.IsolatedAsyncioTestCase):
+    async def test_rpc_builder_failures_do_not_expose_exception_content(self):
+        marker = 'sensitive-test-marker /private/token.txt'
+        for error_type, category in [(ValueError, 'invalid-request'),
+                                     (RuntimeError, 'processing-error')]:
+            with self.subTest(error_type=error_type):
+                async def builder(request):
+                    raise error_type(marker)
+                app = build_partner_app(service_name='source-verifier',
+                    product_type='source-check', processor=verify_source,
+                    product_builder=builder)
+                client = AipRpcClient('http://partner.test/rpc', 'test-leader',
+                    transport=httpx.ASGITransport(app=app), identity_binding_enabled=False)
+                try:
+                    result = await client.start_task(f'session-{uuid.uuid4()}',
+                        valid_request(), task_id=f'task-{uuid.uuid4()}')
+                    self.assertEqual(result.status.state, TaskState.Failed)
+                    reply = result.model_dump_json()
+                    self.assertIn(category, reply)
+                    self.assertNotIn(marker, reply)
+                    self.assertFalse(result.products)
+                    self.assertIsNone(AIP_TASK_ID.get())
+                    self.assertIsNone(AIP_TASK_TRANSPORT.get())
+                finally:
+                    await client.close()
+
     def test_partner_apps_install_peer_certificate_middleware(self) -> None:
         for app in (source_app, grader_app, contradiction_app):
             self.assertTrue(
@@ -58,13 +87,9 @@ class AipPartnerTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(started.status.state, TaskState.AwaitingCompletion)
             completed = await client.complete_task(task_id, session_id)
             self.assertEqual(completed.status.state, TaskState.Completed)
-            product_text = next(
-                item.text
-                for product in completed.products or []
-                for item in product.dataItems
-                if isinstance(item, TextDataItem)
-            )
-            product = json.loads(product_text)
+            product = read_product(completed.products)
+            self.assertEqual(completed.products[0].dataItems[0].text, product['answer'])
+            self.assertFalse(completed.products[0].dataItems[0].text.startswith('{'))
             self.assertEqual(product["schema_version"], SCHEMA_VERSION)
             self.assertEqual(product["product_type"], expected_product_type)
             self.assertEqual(product["payload"]["claim_id"], "claim-aip")
@@ -97,7 +122,7 @@ class AipPartnerTests(unittest.IsolatedAsyncioTestCase):
         try:
             result = await client.start_task(
                 f"session-{uuid.uuid4()}",
-                "not-json",
+                '{"claim":',
                 task_id=f"task-{uuid.uuid4()}",
             )
             self.assertEqual(result.status.state, TaskState.Failed)

@@ -15,7 +15,7 @@ services:
     environment:
       AIP_IDENTITY_BINDING_ENABLED: "false"
     ports:
-      - "8021:8021"
+      - "127.0.0.1:8021:8021"
     restart: unless-stopped
 
   evidence-grader:
@@ -34,7 +34,7 @@ services:
     environment:
       AIP_IDENTITY_BINDING_ENABLED: "false"
     ports:
-      - "8022:8022"
+      - "127.0.0.1:8022:8022"
     restart: unless-stopped
 
   contradiction-scout:
@@ -53,7 +53,7 @@ services:
     environment:
       AIP_IDENTITY_BINDING_ENABLED: "false"
     ports:
-      - "8023:8023"
+      - "127.0.0.1:8023:8023"
     restart: unless-stopped
 
   leader:
@@ -66,7 +66,7 @@ services:
       EVIDENCE_GRADER_URL: http://evidence-grader:8022/rpc
       CONTRADICTION_SCOUT_URL: http://contradiction-scout:8023/rpc
     ports:
-      - "8010:8010"
+      - "127.0.0.1:8010:8010"
     depends_on:
       - source-verifier
       - evidence-grader

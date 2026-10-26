@@ -1,4 +1,12 @@
-# 证链联研本地 MVP
+# Evidence Mesh 服务代码
+
+当前运行方式见[根目录README](../../README.md)，架构和配置见[系统设计](../../docs/architecture.md)与[部署说明](../../docs/deployment.md)。
+
+服务入口为`source_partner:app`、`grader_partner:app`、`contradiction_partner:app`、`leader_app:app`。生产mTLS入口使用`serve_partner`或`serve_leader`；网页/插件桥接为`web_test_app:app`。历史文件名中的test不代表可以绕过凭据。
+
+以下保留早期本地MVP操作记录，仅用于开发模式，不代表当前平台注册或部署状态。
+
+## 历史本地 MVP
 
 在四个终端中从项目根目录启动服务：
 
